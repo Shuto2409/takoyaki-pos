@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0267)file:///C:/Users/User/AppData/Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/local-agent-mode-sessions/3aa53344-2df7-4335-b49f-9cdf4b8b055f/9d4cd09c-2167-4ecf-aae8-884b656da44e/local_0eb1b127-8bc6-4773-9dc7-e94ba3b56340/outputs/festival_pos_online.html -->
-<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>学園祭 会計システム</title>
 <script>
@@ -338,7 +338,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
     <p class="setup-subtitle">管理者だけが一度だけ設定します。他のスタッフはログイン不要！</p>
     <div class="setup-step">
       <h3>① Firebase プロジェクトを作成（無料）</h3>
-      <p><a href="https://console.firebase.google.com/" target="_blank">console.firebase.google.com</a> を開く → Googleアカウントでログイン →「<strong>プロジェクトを追加</strong>」→ 名前を入力 → Google Analytics は<strong>オフ</strong>でOK</p>
+      <p><a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> を開く → Googleアカウントでログイン →「<strong>プロジェクトを追加</strong>」→ 名前を入力 → Google Analytics は<strong>オフ</strong>でOK</p>
     </div>
     <div class="setup-step">
       <h3>② Realtime Database を有効化</h3>
@@ -350,7 +350,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
     </div>
     <div class="form-group" style="margin-bottom:8px;">
       <label>Firebase 設定コードを貼り付け</label>
-      <textarea id="config-input" class="config-area" placeholder="{ &quot;apiKey&quot;: &quot;...&quot;, &quot;databaseURL&quot;: &quot;https://xxx.firebasedatabase.app&quot;, ... }"></textarea>
+      <textarea id="config-input" class="config-area" placeholder='{ "apiKey": "...", "databaseURL": "https://xxx.firebasedatabase.app", ... }'></textarea>
       <div id="setup-msg"></div>
     </div>
     <button class="setup-btn" id="connect-btn" onclick="tryConnect()">🔗 接続して設定を完了する</button>
@@ -376,24 +376,24 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
 </div>
 
 <!-- ============ ROLE SELECT ============ -->
-<div id="role-screen" class="show" style="display: flex;">
+<div id="role-screen">
   <div class="role-header">
-    <div class="store-name" id="role-store-name">学園祭会計システム</div>
+    <div class="store-name" id="role-store-name">学園祭会計</div>
     <div style="margin-top:8px;display:flex;align-items:center;gap:10px;justify-content:center;">
       <div id="role-day-badge" class="role-day-badge role-day-closed">クローズ中</div>
       <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
-        <span class="conn-dot online" id="role-conn-dot"></span>
-        <span id="role-conn-label">リアルタイム同期中</span>
+        <span class="conn-dot" id="role-conn-dot"></span>
+        <span id="role-conn-label">接続中...</span>
       </div>
     </div>
   </div>
   <div class="role-cards">
-    <div class="role-card cashier-card disabled" id="role-cashier" onclick="enterCashier()">
+    <div class="role-card cashier-card" id="role-cashier" onclick="enterCashier()">
       <div class="rc-icon">🛒</div>
       <div class="rc-title">会計</div>
       <div class="rc-desc">注文を受けてお会計を行う</div>
     </div>
-    <div class="role-card kitchen-card disabled" id="role-kitchen" onclick="enterKitchen()">
+    <div class="role-card kitchen-card" id="role-kitchen" onclick="enterKitchen()">
       <div class="rc-icon">👨‍🍳</div>
       <div class="rc-title">調理</div>
       <div class="rc-desc">注文を確認して料理を作る</div>
@@ -404,23 +404,23 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
       <div class="rc-desc">メニュー・売上・在庫を管理する</div>
     </div>
   </div>
-  <div class="role-closed-notice" id="role-closed-notice" style="display: block;">
+  <div class="role-closed-notice" id="role-closed-notice" style="display:none;">
     ⚠️ 現在クローズ中です。<strong>管理画面</strong>からオープンしてください。
   </div>
 </div>
 
 <!-- ============ CASHIER SCREEN ============ -->
-<div id="cashier-screen" style="display: none;">
+<div id="cashier-screen">
   <div class="app-header">
     <button class="header-back" onclick="backToRole()">← 戻る</button>
     <div class="header-info">
       <div class="header-title">🛒 会計</div>
       <div class="header-sub">
-        <span class="conn-dot online" id="cashier-conn-dot"></span>
-        <span id="cashier-conn-label">リアルタイム同期中</span>
+        <span class="conn-dot" id="cashier-conn-dot"></span>
+        <span id="cashier-conn-label">同期中</span>
       </div>
     </div>
-    <div id="day-status-cashier" class="status-closed">クローズ中</div>
+    <div id="day-status-cashier" class="status-open">営業中</div>
   </div>
   <div class="cashier-body">
     <div id="cashier-pos">
@@ -437,7 +437,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
         <div id="cart-footer">
           <div id="total-label">合計金額</div>
           <div id="total-display">¥0</div>
-          <button id="pay-btn" onclick="showPaymentModal()" disabled="">💳 お会計する</button>
+          <button id="pay-btn" onclick="showPaymentModal()" disabled>💳 お会計する</button>
           <button id="clear-cart-btn" onclick="clearCart()">✕ クリア</button>
         </div>
       </div>
@@ -453,24 +453,24 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
 </div>
 
 <!-- ============ KITCHEN SCREEN ============ -->
-<div id="kitchen-screen" style="display: none;">
+<div id="kitchen-screen">
   <div class="app-header kitchen-header">
     <button class="header-back" onclick="backToRole()">← 戻る</button>
     <div class="header-info">
       <div class="header-title">👨‍🍳 調理</div>
       <div class="header-sub">
-        <span class="conn-dot online" id="kitchen-conn-dot"></span>
-        <span id="kitchen-conn-label">リアルタイム同期中</span>
+        <span class="conn-dot" id="kitchen-conn-dot"></span>
+        <span id="kitchen-conn-label">同期中</span>
       </div>
     </div>
-    <div id="day-status-kitchen" class="status-closed">クローズ中</div>
+    <div id="day-status-kitchen" class="status-open">営業中</div>
   </div>
   <div class="kitchen-body">
     <div class="kitchen-toolbar">
       <h2 id="kitchen-title">注文一覧</h2>
       <div class="kitchen-filter-btns">
-        <button class="kf-btn active" id="kf-pending" onclick="setKitchenFilter(&#39;pending&#39;)">未完了</button>
-        <button class="kf-btn" id="kf-all" onclick="setKitchenFilter(&#39;all&#39;)">すべて</button>
+        <button class="kf-btn active" id="kf-pending" onclick="setKitchenFilter('pending')">未完了</button>
+        <button class="kf-btn" id="kf-all" onclick="setKitchenFilter('all')">すべて</button>
       </div>
     </div>
     <div id="kitchen-grid"></div>
@@ -485,22 +485,22 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
 </div>
 
 <!-- ============ ADMIN SCREEN ============ -->
-<div id="admin-screen" style="display: none;">
+<div id="admin-screen">
   <div class="app-header admin-header">
     <button class="header-back" onclick="backToRole()">← 戻る</button>
     <div class="header-info">
       <div class="header-title">⚙️ 管理</div>
       <div class="header-sub">
-        <span class="conn-dot online" id="admin-conn-dot"></span>
-        <span id="admin-conn-label">リアルタイム同期中</span>
+        <span class="conn-dot" id="admin-conn-dot"></span>
+        <span id="admin-conn-label">同期中</span>
       </div>
     </div>
     <div id="day-status-admin" class="status-closed" style="font-size:12px;padding:5px 11px;border-radius:20px;font-weight:700;">クローズ</div>
   </div>
   <div class="admin-tab-nav">
-    <button class="admin-tab-btn active" onclick="switchAdminTab(&#39;settings&#39;)" id="atab-settings">⚙️ 設定</button>
-    <button class="admin-tab-btn" onclick="switchAdminTab(&#39;sales&#39;)" id="atab-sales">📊 売上</button>
-    <button class="admin-tab-btn" onclick="switchAdminTab(&#39;inventory&#39;)" id="atab-inventory">📦 在庫</button>
+    <button class="admin-tab-btn active" onclick="switchAdminTab('settings')" id="atab-settings">⚙️ 設定</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('sales')" id="atab-sales">📊 売上</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('inventory')" id="atab-inventory">📦 在庫</button>
   </div>
   <div class="admin-body">
     <div class="admin-tab-content active" id="acontent-settings"><div id="settings-content"></div></div>
@@ -520,7 +520,7 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
     <div class="change-box" id="change-display"><div class="change-label">お釣り</div><div class="change-amount" id="change-amount">¥0</div></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closePaymentModal()">キャンセル</button>
-      <button class="btn btn-success" id="confirm-pay-btn" onclick="confirmPayment()" disabled="">✓ 決済完了</button>
+      <button class="btn btn-success" id="confirm-pay-btn" onclick="confirmPayment()" disabled>✓ 決済完了</button>
     </div>
   </div>
 </div>
@@ -531,10 +531,10 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
     <h2>🔐 管理者認証</h2>
     <div class="pin-display" id="pin-display">＿＿＿＿</div>
     <div class="pin-grid">
-      <button class="pin-key" onclick="pinInput(&#39;1&#39;)">1</button><button class="pin-key" onclick="pinInput(&#39;2&#39;)">2</button><button class="pin-key" onclick="pinInput(&#39;3&#39;)">3</button>
-      <button class="pin-key" onclick="pinInput(&#39;4&#39;)">4</button><button class="pin-key" onclick="pinInput(&#39;5&#39;)">5</button><button class="pin-key" onclick="pinInput(&#39;6&#39;)">6</button>
-      <button class="pin-key" onclick="pinInput(&#39;7&#39;)">7</button><button class="pin-key" onclick="pinInput(&#39;8&#39;)">8</button><button class="pin-key" onclick="pinInput(&#39;9&#39;)">9</button>
-      <button class="pin-key del" onclick="pinDelete()">⌫</button><button class="pin-key" onclick="pinInput(&#39;0&#39;)">0</button><button class="pin-key ok" onclick="pinConfirm()">OK</button>
+      <button class="pin-key" onclick="pinInput('1')">1</button><button class="pin-key" onclick="pinInput('2')">2</button><button class="pin-key" onclick="pinInput('3')">3</button>
+      <button class="pin-key" onclick="pinInput('4')">4</button><button class="pin-key" onclick="pinInput('5')">5</button><button class="pin-key" onclick="pinInput('6')">6</button>
+      <button class="pin-key" onclick="pinInput('7')">7</button><button class="pin-key" onclick="pinInput('8')">8</button><button class="pin-key" onclick="pinInput('9')">9</button>
+      <button class="pin-key del" onclick="pinDelete()">⌫</button><button class="pin-key" onclick="pinInput('0')">0</button><button class="pin-key ok" onclick="pinConfirm()">OK</button>
     </div>
     <div id="pin-error">❌ PINが違います</div>
     <div style="text-align:center;margin-top:13px;"><button class="btn btn-ghost" onclick="closePinModal()">キャンセル</button></div>
@@ -581,9 +581,9 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
 <div class="loading-overlay" id="loading"><div class="spinner"></div><p style="margin-top:12px;font-weight:700;color:#555;">処理中...</p></div>
 <div id="toast"></div>
 
-<script src="./学園祭 会計システム_files/firebase-app-compat.js.ダウンロード"></script>
-<script src="./学園祭 会計システム_files/firebase-database-compat.js.ダウンロード"></script>
-<script src="./学園祭 会計システム_files/xlsx.full.min.js.ダウンロード"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ============================================================
 //  CONFIG
@@ -1636,6 +1636,5 @@ function startApp(config){
   document.getElementById('setup-screen').classList.add('show');
 })();
 </script>
-
-
-</body></html>
+</body>
+</html>
