@@ -363,14 +363,20 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
   <div class="share-card">
     <div class="big-icon">🎉</div>
     <h2>接続成功！</h2>
-    <p>配布用ファイルを生成してメンバーに送るだけ。<br>受け取った人はログイン不要でそのまま使えます！</p>
+    <p>GitHubで管理するなら <strong>config.js</strong> 方式が便利。<br>LINE・AirDrop で直接送るなら配布用ファイルをどうぞ。</p>
     <div class="share-steps">
-      <h3>📤 共有手順</h3>
-      <div class="ssi"><div class="ssi-n">1</div><div>「配布用ファイルをダウンロード」をクリック</div></div>
-      <div class="ssi"><div class="ssi-n">2</div><div><strong>festival_pos_share.html</strong> を LINE・メール・AirDrop でメンバーに送る</div></div>
-      <div class="ssi"><div class="ssi-n">3</div><div>受け取った人はファイルを開くだけ！ログイン不要 ✅</div></div>
+      <h3>🌐 GitHub Pages で共有する場合</h3>
+      <div class="ssi"><div class="ssi-n">1</div><div>「config.js をダウンロード」をクリック</div></div>
+      <div class="ssi"><div class="ssi-n">2</div><div><strong>config.js</strong> と <strong>index.html</strong> の2ファイルをGitHubにアップ</div></div>
+      <div class="ssi"><div class="ssi-n">3</div><div>以降は <strong>index.html だけ</strong>更新すればOK ✅</div></div>
     </div>
-    <button class="share-dl-btn" onclick="downloadShareFile()">📥 配布用ファイルをダウンロード</button>
+    <div class="share-steps" style="background:#eff6ff;margin-top:10px;">
+      <h3>📱 LINE・AirDrop で直接送る場合</h3>
+      <div class="ssi"><div class="ssi-n">1</div><div>「配布用ファイル」をダウンロード</div></div>
+      <div class="ssi"><div class="ssi-n">2</div><div>そのままメンバーに送るだけ。受け取った人はすぐ使える ✅</div></div>
+    </div>
+    <button class="share-dl-btn" onclick="downloadConfigJs()">⚙️ config.js をダウンロード（GitHub Pages用）</button>
+    <button class="share-dl-btn" style="background:#0ea5e9;margin-top:8px;" onclick="downloadShareFile()">📥 配布用ファイル（LINE・AirDrop用）</button>
     <button class="share-open-btn" onclick="goToRoleSelect()">→ このままアプリを開く（管理者用）</button>
   </div>
 </div>
@@ -581,6 +587,16 @@ body{font-family:'Hiragino Kaku Gothic Pro','メイリオ',sans-serif;background
 <div class="loading-overlay" id="loading"><div class="spinner"></div><p style="margin-top:12px;font-weight:700;color:#555;">処理中...</p></div>
 <div id="toast"></div>
 
+<script>
+// config.js が存在すれば自動読み込み（GitHub Pages用）
+(function(){
+  var s=document.createElement('script');
+  s.src='config.js';
+  s.onload=function(){console.log('config.js loaded');};
+  s.onerror=function(){console.log('config.js not found, using localStorage or setup');};
+  document.head.appendChild(s);
+})();
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -669,6 +685,18 @@ function downloadShareFile(){
   a.href=url; a.download='festival_pos_share.html';
   a.click(); URL.revokeObjectURL(url);
   showToast('📥 配布用ファイルをダウンロードしました！','success');
+}
+
+function downloadConfigJs(){
+  const config=loadSavedConfig();
+  if(!config){showToast('設定が見つかりません','error');return;}
+  const js='// 学園祭POSシステム Firebase設定\n// このファイルはindex.htmlと同じフォルダに置いてください\nwindow.PRESET_CONFIG = '+JSON.stringify(config,null,2)+';\n';
+  const blob=new Blob([js],{type:'text/javascript; charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='config.js';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('✅ config.js をダウンロードしました！','success');
 }
 
 function goToRoleSelect(){
