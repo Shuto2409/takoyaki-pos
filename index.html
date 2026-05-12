@@ -382,6 +382,27 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .component-row .rm-btn{background:#fee2e2;border:none;color:var(--danger);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .set-components-note{font-size:11px;color:var(--gray);margin-top:4px;}
 .ticket-set-components{font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.2);}
+
+/* ===== SALES DASHBOARD ===== */
+.sales-chart-wrap{position:relative;height:200px;margin-bottom:4px;}
+.rank-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.rank-item:last-child{border-bottom:none;}
+.rank-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;}
+.rank-1{background:linear-gradient(135deg,#f59e0b,#d97706);color:white;}
+.rank-2{background:linear-gradient(135deg,#94a3b8,#64748b);color:white;}
+.rank-3{background:linear-gradient(135deg,#d97706,#b45309);color:white;}
+.rank-other{background:#f1f5f9;color:#64748b;}
+.rank-info{flex:1;min-width:0;}
+.rank-name{font-size:13px;font-weight:800;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-meta{font-size:11px;color:var(--gray);margin-top:2px;}
+.rank-bar-wrap{width:90px;flex-shrink:0;}
+.rank-bar-bg{background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden;}
+.rank-bar-fill{height:8px;border-radius:6px;background:linear-gradient(90deg,var(--primary),#60a5fa);transition:width .6s ease;}
+.rank-revenue{font-size:13px;font-weight:900;color:var(--primary);text-align:right;white-space:nowrap;min-width:70px;}
+.set-tag{display:inline-block;background:#fef3c7;color:#d97706;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;}
+.tab-pills{display:flex;gap:6px;margin-bottom:14px;}
+.tab-pill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.tab-pill.active{background:var(--primary);border-color:var(--primary);color:white;}
 </style>
 </head>
 <body>
@@ -696,6 +717,7 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 // ============================================================
 //  CONFIG
@@ -1590,32 +1612,41 @@ async function changePin(){
 // ============================================================
 //  ADMIN: SALES
 // ============================================================
+let _salesChart=null, _salesRankTab='today';
+
 function renderSalesContent(){
   const days=Object.values(S.daysSnap||{});
   const allOrders=Object.values(S.ordersSnap||{});
   const todayOrders=S.isDayOpen?allOrders.filter(o=>o.dayId===S.currentDay?.id):[];
   const todayTotal=todayOrders.reduce((s,o)=>s+o.total,0);
   const allTotal=allOrders.reduce((s,o)=>s+o.total,0);
-  const todayMap=buildItemMap(todayOrders);
+  const avgOrder=todayOrders.length>0?Math.round(todayTotal/todayOrders.length):0;
 
   let html=`<div class="stats-grid">
-    <div class="stat-card"><div class="stat-value">¥${todayTotal.toLocaleString()}</div><div class="stat-label">本日の売上</div></div>
+    <div class="stat-card" style="border-top-color:#16a34a;"><div class="stat-value" style="color:#16a34a;">¥${todayTotal.toLocaleString()}</div><div class="stat-label">本日の売上</div></div>
     <div class="stat-card"><div class="stat-value">${todayOrders.length}</div><div class="stat-label">本日の取引数</div></div>
-    <div class="stat-card"><div class="stat-value">¥${allTotal.toLocaleString()}</div><div class="stat-label">累計売上</div></div>
-    <div class="stat-card"><div class="stat-value">${days.length+(S.isDayOpen?1:0)}</div><div class="stat-label">営業日数</div></div>
+    <div class="stat-card" style="border-top-color:#d97706;"><div class="stat-value" style="color:#d97706;">¥${avgOrder.toLocaleString()}</div><div class="stat-label">平均客単価</div></div>
+    <div class="stat-card" style="border-top-color:#7c3aed;"><div class="stat-value" style="color:#7c3aed;">¥${allTotal.toLocaleString()}</div><div class="stat-label">累計売上</div></div>
   </div>`;
 
-  html+=`<div class="card"><div class="sec-hdr"><h3>📊 本日の商品別売上</h3></div>`;
-  if(Object.keys(todayMap).length===0){html+=`<div class="empty-state"><div class="icon">📊</div><p>まだ売上がありません</p></div>`;}
-  else{
-    html+=`<div class="table-wrap"><table class="data-table"><thead><tr><th>商品名</th><th>販売数</th><th>売上金額</th></tr></thead><tbody>`;
-    Object.entries(todayMap).sort((a,b)=>b[1].revenue-a[1].revenue).forEach(([n,d])=>{
-      html+=`<tr><td>${esc(n)}</td><td>${d.qty} 個</td><td>¥${d.revenue.toLocaleString()}</td></tr>`;
-    });
-    html+=`</tbody></table></div>`;
-  }
-  html+=`</div>`;
+  // 時間帯別グラフ
+  html+=`<div class="card">
+    <h3>📈 時間帯別売上（今日）</h3>
+    <div class="sales-chart-wrap"><canvas id="hourly-chart"></canvas></div>
+  </div>`;
 
+  // 商品ランキング
+  html+=`<div class="card">
+    <div class="sec-hdr"><h3>🏆 売上ランキング</h3>
+      <div class="tab-pills">
+        <button class="tab-pill ${_salesRankTab==='today'?'active':''}" onclick="setSalesRankTab('today')">今日</button>
+        <button class="tab-pill ${_salesRankTab==='all'?'active':''}" onclick="setSalesRankTab('all')">累計</button>
+      </div>
+    </div>
+    <div id="sales-rank-list"></div>
+  </div>`;
+
+  // 過去の営業記録
   if(days.length>0){
     html+=`<div class="card"><h3>📅 過去の営業記録</h3>`;
     [...days].sort((a,b)=>b.dayNumber-a.dayNumber).forEach(day=>{
@@ -1625,16 +1656,109 @@ function renderSalesContent(){
     html+=`</div>`;
   }
 
+  // 取引履歴
   if(todayOrders.length>0){
     html+=`<div class="card"><h3>🧾 本日の取引履歴</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>時刻</th><th>商品</th><th>金額</th></tr></thead><tbody>`;
     [...todayOrders].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).forEach(o=>{
       const time=new Date(o.timestamp).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
-      const status=o.status==='completed'?'<span style="color:var(--success);font-size:11px;">✅完了</span>':'<span style="color:var(--warning);font-size:11px;">⏳未完了</span>';
-      html+=`<tr><td>#${o.orderNum||'-'} ${status}</td><td>${time}</td><td style="font-size:12px;">${esc((o.items||[]).map(i=>`${i.name}×${i.qty}`).join('、'))}</td><td style="font-weight:700;">¥${o.total.toLocaleString()}</td></tr>`;
+      const status=o.status==='completed'?'<span style="color:var(--success);font-size:11px;">✅</span>':'<span style="color:var(--warning);font-size:11px;">⏳</span>';
+      html+=`<tr><td>${status}#${o.orderNum||'-'}</td><td>${time}</td><td style="font-size:12px;">${esc((o.items||[]).map(i=>`${i.name}×${i.qty}`).join('・'))}</td><td style="font-weight:800;">¥${o.total.toLocaleString()}</td></tr>`;
     });
     html+=`</tbody></table></div></div>`;
   }
+
   document.getElementById('sales-content').innerHTML=html;
+
+  // グラフ描画
+  renderHourlyChart(todayOrders);
+  renderSalesRank(allOrders, days);
+}
+
+function setSalesRankTab(tab){
+  _salesRankTab=tab;
+  const allOrders=Object.values(S.ordersSnap||{});
+  const days=Object.values(S.daysSnap||{});
+  document.querySelectorAll('.tab-pill').forEach(b=>{
+    b.classList.toggle('active',b.textContent.includes(tab==='today'?'今日':'累計'));
+  });
+  renderSalesRank(allOrders,days);
+}
+
+function renderHourlyChart(todayOrders){
+  const ctx=document.getElementById('hourly-chart');
+  if(!ctx||typeof Chart==='undefined') return;
+  if(_salesChart){_salesChart.destroy();_salesChart=null;}
+
+  // 営業時間帯（8〜22時）
+  const hours=Array.from({length:15},(_,i)=>i+8);
+  const hourlyData=hours.map(h=>{
+    return todayOrders.filter(o=>{
+      const oh=new Date(o.timestamp).getHours();
+      return oh===h;
+    }).reduce((s,o)=>s+o.total,0);
+  });
+
+  _salesChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:hours.map(h=>`${h}時`),
+      datasets:[{
+        label:'売上（円）',
+        data:hourlyData,
+        backgroundColor:'rgba(37,99,235,0.75)',
+        borderRadius:6,
+        borderSkipped:false,
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>`¥${c.raw.toLocaleString()}`}}},
+      scales:{
+        y:{ticks:{callback:v=>`¥${v.toLocaleString()}`},grid:{color:'rgba(0,0,0,.06)'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+function buildDetailedItemMap(orders){
+  const m={};
+  orders.forEach(o=>(o.items||[]).forEach(item=>{
+    const key=item.id||item.name;
+    if(!m[key])m[key]={name:item.name,qty:0,revenue:0,isSet:!!(S.menu[item.id]&&S.menu[item.id].isSet)};
+    m[key].qty+=item.qty;
+    m[key].revenue+=item.price*item.qty;
+  }));
+  return m;
+}
+
+function renderSalesRank(allOrders, days){
+  const el=document.getElementById('sales-rank-list');
+  if(!el)return;
+  let targetOrders=allOrders;
+  if(_salesRankTab==='today'&&S.isDayOpen&&S.currentDay){
+    targetOrders=allOrders.filter(o=>o.dayId===S.currentDay.id);
+  }
+  const itemMap=buildDetailedItemMap(targetOrders);
+  const sorted=Object.values(itemMap).sort((a,b)=>b.revenue-a.revenue);
+  if(sorted.length===0){el.innerHTML=`<div class="empty-state"><div class="icon">📊</div><p>まだ売上データがありません</p></div>`;return;}
+  const maxRev=sorted[0].revenue;
+  el.innerHTML=sorted.map((item,i)=>{
+    const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-other';
+    const barW=maxRev>0?Math.round(item.revenue/maxRev*100):0;
+    return `<div class="rank-item">
+      <div class="rank-num ${rankClass}">${i+1}</div>
+      <div class="rank-info">
+        <div class="rank-name">${esc(item.name)}${item.isSet?'<span class="set-tag">SET</span>':''}</div>
+        <div class="rank-meta">${item.qty}個販売</div>
+        <div class="rank-bar-wrap" style="margin-top:5px;width:100%;max-width:200px;">
+          <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:${barW}%"></div></div>
+        </div>
+      </div>
+      <div class="rank-revenue">¥${item.revenue.toLocaleString()}</div>
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
