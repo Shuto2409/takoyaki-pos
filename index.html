@@ -371,6 +371,17 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .pos-tab-content{display:none;}
 .pos-tab-content.active{display:block;}
 .app-header.pos-header{background:linear-gradient(135deg,#0f766e,#0d9488);}
+
+/* ===== SET MENU ===== */
+.set-badge{display:inline-block;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;letter-spacing:.5px;vertical-align:middle;margin-left:4px;}
+.menu-btn.is-set{border-color:#fbbf24;}
+.menu-btn.is-set .mprice{color:#d97706;}
+.component-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.component-row select{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;background:white;}
+.component-row input[type=number]{width:64px;padding:7px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;text-align:center;outline:none;}
+.component-row .rm-btn{background:#fee2e2;border:none;color:var(--danger);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.set-components-note{font-size:11px;color:var(--gray);margin-top:4px;}
+.ticket-set-components{font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.2);}
 </style>
 </head>
 <body>
@@ -649,7 +660,27 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
     <div class="form-group"><label>商品名 <span style="color:var(--danger)">*</span></label><input type="text" id="e-name" placeholder="例: たこ焼き (6個)"></div>
     <div class="form-group"><label>価格（円）<span style="color:var(--danger)">*</span></label><input type="number" id="e-price" placeholder="300" min="0"></div>
     <div class="form-group"><label>カテゴリー（任意）</label><input type="text" id="e-cat" placeholder="フード / ドリンク / デザート"></div>
-    <div class="form-group"><label>初期在庫数（0 = 在庫管理なし）</label><input type="number" id="e-stock" placeholder="0" min="0" value="0"></div>
+
+    <!-- セット商品トグル -->
+    <div style="margin-bottom:13px;">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;font-weight:700;color:#374151;">
+        <label class="toggle-switch" style="flex-shrink:0;"><input type="checkbox" id="e-is-set" onchange="toggleSetMode(this.checked)"><span class="toggle-slider"></span></label>
+        セット商品として登録する
+      </label>
+      <p style="font-size:11px;color:var(--gray);margin-top:5px;margin-left:2px;">ONにすると構成品の在庫が自動で連動します</p>
+    </div>
+
+    <!-- 通常商品：在庫数 -->
+    <div class="form-group" id="e-stock-group"><label>初期在庫数（0 = 在庫管理なし）</label><input type="number" id="e-stock" placeholder="0" min="0" value="0"></div>
+
+    <!-- セット商品：構成品選択 -->
+    <div id="e-set-group" style="display:none;">
+      <div style="font-size:13px;font-weight:800;color:#374151;margin-bottom:8px;">構成品 <span style="color:var(--danger)">*</span></div>
+      <div id="e-components-list" style="background:#f8faff;border-radius:10px;padding:10px;margin-bottom:8px;min-height:48px;"></div>
+      <button type="button" class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="addComponentRow()">＋ 構成品を追加</button>
+      <p style="font-size:11px;color:var(--gray);margin-top:7px;">在庫はセットの売上に応じて構成品から自動的に減ります</p>
+    </div>
+
     <input type="hidden" id="e-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeMenuEditModal()">キャンセル</button>
@@ -1060,15 +1091,28 @@ function renderMenu(){
   }
   grid.innerHTML='';
   filtered.forEach(item=>{
-    const hasStock=item.stock>0;
-    const cur=hasStock?(item.currentStock!=null?item.currentStock:item.stock):null;
-    const isOut=hasStock&&cur<=0;
-    const isLow=hasStock&&cur>0&&cur<=5;
+    let isOut=false,isLow=false,stockLabel='';
+    if(item.isSet){
+      const avail=getSetAvailability(item);
+      if(avail!==null){
+        isOut=avail<=0;
+        isLow=avail>0&&avail<=3;
+        stockLabel=isOut?'在庫切れ':`セット残り ${avail} 個`;
+      }
+    } else {
+      const hasStock=item.stock>0;
+      const cur=hasStock?(item.currentStock!=null?item.currentStock:item.stock):null;
+      if(hasStock){
+        isOut=cur<=0;
+        isLow=cur>0&&cur<=5;
+        stockLabel=isOut?'在庫切れ':`残り ${cur} 個`;
+      }
+    }
     const btn=document.createElement('button');
-    btn.className='menu-btn'+(isOut?' out-of-stock':isLow?' low-stock':'');
+    btn.className='menu-btn'+(item.isSet?' is-set':'')+(isOut?' out-of-stock':isLow?' low-stock':'');
     btn.disabled=isOut;
     btn.onclick=()=>addToCart(item);
-    btn.innerHTML=`<div class="mname">${esc(item.name)}</div><div class="mprice">¥${item.price.toLocaleString()}</div>${hasStock?`<div class="mstock">${isOut?'在庫切れ':`残り ${cur} 個`}</div>`:''}`;
+    btn.innerHTML=`<div class="mname">${esc(item.name)}${item.isSet?'<span class="set-badge">SET</span>':''}</div><div class="mprice">¥${item.price.toLocaleString()}</div>${stockLabel?`<div class="mstock">${stockLabel}</div>`:''}`;
     grid.appendChild(btn);
   });
 }
@@ -1079,7 +1123,12 @@ function renderMenu(){
 function addToCart(item){
   const ex=S.cart.find(c=>c.id===item.id);
   if(ex){
-    if(item.stock>0&&ex.qty>=(item.currentStock!=null?item.currentStock:item.stock)){showToast('在庫が足りません','error');return;}
+    if(item.isSet){
+      const avail=getSetAvailability(item);
+      if(avail!==null&&ex.qty>=avail){showToast('在庫が足りません','error');return;}
+    } else if(item.stock>0&&ex.qty>=(item.currentStock!=null?item.currentStock:item.stock)){
+      showToast('在庫が足りません','error');return;
+    }
     ex.qty++;
   }else{S.cart.push({...item,qty:1});}
   renderCart();
@@ -1174,7 +1223,20 @@ async function confirmPayment(){
     await db.ref(`${ROOT}/orders/${order.id}`).set(order);
     for(const ci of S.cart){
       const mi=S.menu[ci.id];
-      if(mi&&mi.stock>0){
+      if(!mi) continue;
+      if(mi.isSet&&mi.components){
+        // セット: 構成品の在庫を個別に減算
+        for(const comp of mi.components){
+          const compItem=S.menu[comp.id];
+          if(compItem&&compItem.stock>0){
+            await db.ref(`${ROOT}/menu/${comp.id}/currentStock`).transaction(cur=>{
+              if(cur===null)return cur;
+              return Math.max(0,cur-comp.qty*ci.qty);
+            });
+          }
+        }
+      } else if(mi.stock>0){
+        // 通常商品: 自身の在庫を減算
         await db.ref(`${ROOT}/menu/${ci.id}/currentStock`).transaction(cur=>{
           if(cur===null)return cur;
           return Math.max(0,cur-ci.qty);
@@ -1622,6 +1684,9 @@ function showMenuAddModal(){
   document.getElementById('menu-edit-title').textContent='📋 商品を追加';
   ['e-name','e-price','e-cat'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('e-stock').value='0';
+  document.getElementById('e-is-set').checked=false;
+  toggleSetMode(false);
+  document.getElementById('e-components-list').innerHTML='';
   document.getElementById('menu-edit-modal-overlay').classList.add('show');
 }
 function showMenuEditModal(id){
@@ -1632,29 +1697,93 @@ function showMenuEditModal(id){
   document.getElementById('e-price').value=item.price;
   document.getElementById('e-cat').value=item.category||'';
   document.getElementById('e-stock').value=item.stock||0;
+  const isSet=!!item.isSet;
+  document.getElementById('e-is-set').checked=isSet;
+  toggleSetMode(isSet);
+  // 構成品を復元
+  const list=document.getElementById('e-components-list');
+  list.innerHTML='';
+  if(isSet&&item.components){
+    item.components.forEach(c=>addComponentRow(c.id,c.qty));
+  }
   document.getElementById('menu-edit-modal-overlay').classList.add('show');
 }
 function closeMenuEditModal(){document.getElementById('menu-edit-modal-overlay').classList.remove('show');}
+
+function toggleSetMode(isSet){
+  document.getElementById('e-stock-group').style.display=isSet?'none':'block';
+  document.getElementById('e-set-group').style.display=isSet?'block':'none';
+}
+
+function addComponentRow(selectedId='',qty=1){
+  const list=document.getElementById('e-components-list');
+  const row=document.createElement('div');
+  row.className='component-row';
+  const items=Object.values(S.menu).filter(i=>!i.isSet&&i.active!==false&&i.id!==S.editingMenuId);
+  const opts=items.map(i=>`<option value="${i.id}" ${String(i.id)===String(selectedId)?'selected':''}>${esc(i.name)} (¥${i.price})</option>`).join('');
+  row.innerHTML=`
+    <select class="comp-select" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;background:white;">
+      <option value="">商品を選択...</option>${opts}
+    </select>
+    <input type="number" class="comp-qty" value="${qty}" min="1" style="width:64px;padding:7px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;text-align:center;outline:none;">
+    <button type="button" class="rm-btn" onclick="this.parentElement.remove()" style="background:#fee2e2;border:none;color:var(--danger);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0;">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function getSetAvailability(item){
+  if(!item.isSet||!item.components||!item.components.length) return null;
+  let minAvail=Infinity;
+  for(const comp of item.components){
+    const ci=S.menu[comp.id];
+    if(!ci) return 0;
+    if(ci.stock>0){
+      const cur=ci.currentStock!=null?ci.currentStock:ci.stock;
+      const avail=Math.floor(cur/comp.qty);
+      if(avail<minAvail) minAvail=avail;
+    }
+  }
+  return minAvail===Infinity?null:minAvail;
+}
 async function saveMenuItem(){
   const name=document.getElementById('e-name').value.trim();
   const price=parseInt(document.getElementById('e-price').value);
   const category=document.getElementById('e-cat').value.trim();
-  const stock=parseInt(document.getElementById('e-stock').value)||0;
+  const isSet=document.getElementById('e-is-set').checked;
+
   if(!name){showToast('商品名を入力してください','error');return;}
   if(isNaN(price)||price<0){showToast('正しい価格を入力してください','error');return;}
+
+  let components=[];
+  if(isSet){
+    const rows=document.querySelectorAll('#e-components-list .component-row');
+    for(const row of rows){
+      const sel=row.querySelector('.comp-select');
+      const qtyEl=row.querySelector('.comp-qty');
+      if(!sel.value){showToast('構成品を選択してください','error');return;}
+      components.push({id:parseInt(sel.value)||sel.value,qty:parseInt(qtyEl.value)||1});
+    }
+    if(components.length===0){showToast('構成品を1つ以上追加してください','error');return;}
+  }
+
+  const stock=isSet?0:parseInt(document.getElementById('e-stock').value)||0;
   showLoading(true);
   try{
     if(S.editingMenuId){
       const prev=S.menu[S.editingMenuId]||{};
-      const curStock=stock!==prev.stock?stock:(prev.currentStock!=null?prev.currentStock:stock);
-      await db.ref(`${ROOT}/menu/${S.editingMenuId}`).update({name,price,category,stock,currentStock:curStock});
+      const curStock=isSet?0:(stock!==prev.stock?stock:(prev.currentStock!=null?prev.currentStock:stock));
+      const data={name,price,category,stock,currentStock:curStock,isSet:isSet};
+      if(isSet) data.components=components; else data.components=null;
+      await db.ref(`${ROOT}/menu/${S.editingMenuId}`).update(data);
     }else{
       const id=Date.now();
-      await db.ref(`${ROOT}/menu/${id}`).set({id,name,price,category,stock,currentStock:stock,active:true});
+      const data={id,name,price,category,stock,currentStock:stock,active:true,isSet:isSet};
+      if(isSet) data.components=components;
+      await db.ref(`${ROOT}/menu/${id}`).set(data);
     }
     closeMenuEditModal();
     showToast(S.editingMenuId?'商品を更新しました ✅':'商品を追加しました ✅','success');
-  }catch(e){showToast('エラーが発生しました','error');}
+  }catch(e){console.error(e);showToast('エラーが発生しました','error');}
   showLoading(false);
 }
 async function toggleItem(id,active){await db.ref(`${ROOT}/menu/${id}/active`).set(active);}
