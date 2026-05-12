@@ -170,11 +170,22 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 #kitchen-screen{display:none;}
 #kitchen-screen.show{display:block;}
 .kitchen-body{padding:14px;max-width:1100px;margin:0 auto;}
+.kitchen-layout{display:flex;gap:12px;align-items:flex-start;}
+.kitchen-main{flex:2;min-width:0;}
+.kitchen-side{flex:0 0 200px;min-width:0;position:sticky;top:64px;max-height:calc(100vh - 80px);display:flex;flex-direction:column;}
+@media(max-width:600px){.kitchen-layout{flex-direction:column;}.kitchen-side{flex:none;width:100%;position:static;max-height:280px;}}
 .kitchen-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
 .kitchen-toolbar h2{font-size:16px;font-weight:800;color:#1e293b;}
-.kitchen-filter-btns{display:flex;gap:8px;}
-.kf-btn{padding:7px 16px;border:2px solid var(--border);border-radius:20px;background:white;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
-.kf-btn.active{background:var(--kitchen);border-color:var(--kitchen);color:white;}
+.kitchen-side-header{font-size:12px;font-weight:800;color:var(--gray);padding:8px 12px;background:white;border-radius:12px 12px 0 0;border:1px solid var(--border);border-bottom:none;letter-spacing:.5px;text-transform:uppercase;}
+#kitchen-done-feed{background:white;border:1px solid var(--border);border-radius:0 0 12px 12px;overflow-y:auto;flex:1;max-height:calc(100vh - 140px);}
+.done-feed-item{padding:10px 12px;border-bottom:1px solid var(--border);animation:feedIn .3s ease;transition:opacity .4s,transform .4s;}
+.done-feed-item:last-child{border-bottom:none;}
+.done-feed-item.removing{opacity:0;transform:translateY(10px);}
+@keyframes feedIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.done-feed-num{font-size:15px;font-weight:900;color:#1e293b;}
+.done-feed-items{font-size:11px;color:var(--gray);margin-top:2px;line-height:1.5;}
+.done-feed-time{font-size:10px;color:#94a3b8;margin-top:3px;}
+.done-feed-empty{padding:24px 12px;text-align:center;color:#94a3b8;font-size:12px;font-weight:600;}
 
 #kitchen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
 .order-ticket{background:white;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.1);overflow:hidden;transition:all .25s;border:2px solid var(--border);}
@@ -510,14 +521,18 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
     <div id="day-status-kitchen" class="status-open">営業中</div>
   </div>
   <div class="kitchen-body">
-    <div class="kitchen-toolbar">
-      <h2 id="kitchen-title">注文一覧</h2>
-      <div class="kitchen-filter-btns">
-        <button class="kf-btn active" id="kf-pending" onclick="setKitchenFilter('pending')">未完了</button>
-        <button class="kf-btn" id="kf-all" onclick="setKitchenFilter('all')">すべて</button>
+    <div class="kitchen-layout">
+      <div class="kitchen-main">
+        <div class="kitchen-toolbar">
+          <h2 id="kitchen-title">未完了の注文</h2>
+        </div>
+        <div id="kitchen-grid"></div>
+      </div>
+      <div class="kitchen-side">
+        <div class="kitchen-side-header">✅ 完了済み</div>
+        <div id="kitchen-done-feed"></div>
       </div>
     </div>
-    <div id="kitchen-grid"></div>
   </div>
   <!-- closed overlay for kitchen -->
   <div class="closed-overlay" id="kitchen-closed">
@@ -1186,22 +1201,26 @@ function setKitchenFilter(f){
 function renderKitchen(){
   const grid=document.getElementById('kitchen-grid');
   if(!grid) return;
-  if(!S.isDayOpen){grid.innerHTML='';return;}
+  if(!S.isDayOpen){grid.innerHTML='';renderKitchenDoneFeed([]);return;}
 
   const dayOrders=Object.values(S.ordersSnap)
     .filter(o=>o.dayId===S.currentDay.id)
     .sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
 
-  const filtered=S.kitchenFilter==='pending'
-    ? dayOrders.filter(o=>o.status!=='completed')
-    : dayOrders;
+  const pending=dayOrders.filter(o=>o.status!=='completed');
+  const done=dayOrders.filter(o=>o.status==='completed');
 
-  const pending=dayOrders.filter(o=>o.status!=='completed').length;
+  const pendingCount=pending.length;
   document.getElementById('kitchen-title').textContent=
-    `注文一覧 ${pending>0?`（未完了 ${pending}件）`:''}`;
+    `未完了の注文${pendingCount>0?` (${pendingCount}件)`:''}`;
+
+  // 完了フィードを更新
+  renderKitchenDoneFeed(done);
+
+  const filtered=pending;
 
   if(filtered.length===0){
-    grid.innerHTML=`<div class="kitchen-empty"><div class="icon">${S.kitchenFilter==='pending'?'✅':'🍽️'}</div><p>${S.kitchenFilter==='pending'?'未完了の注文はありません！':'まだ注文がありません'}</p></div>`;
+    grid.innerHTML=`<div class="kitchen-empty"><div class="icon">✅</div><p>未完了の注文はありません！</p></div>`;
     return;
   }
 
@@ -1247,6 +1266,59 @@ function renderKitchen(){
     grid.appendChild(card);
   });
   startElapsedTimer();
+}
+
+const DONE_FEED_MAX=10;
+
+function renderKitchenDoneFeed(doneOrders){
+  const feed=document.getElementById('kitchen-done-feed');
+  if(!feed) return;
+
+  // 新しい順に並べ、最大10件
+  const sorted=[...doneOrders]
+    .sort((a,b)=>b.timestamp.localeCompare(a.timestamp))
+    .slice(0,DONE_FEED_MAX);
+
+  if(sorted.length===0){
+    feed.innerHTML=`<div class="done-feed-empty">まだ完了した注文はありません</div>`;
+    return;
+  }
+
+  // 既存アイテムのIDセット
+  const existingIds=new Set([...feed.querySelectorAll('.done-feed-item')].map(el=>el.dataset.id));
+  const newIds=new Set(sorted.map(o=>String(o.id)));
+
+  // 不要なアイテムを削除アニメーションで消す
+  feed.querySelectorAll('.done-feed-item').forEach(el=>{
+    if(!newIds.has(el.dataset.id)){
+      el.classList.add('removing');
+      setTimeout(()=>el.remove(),400);
+    }
+  });
+
+  // 新しいアイテムを先頭に追加
+  sorted.forEach(order=>{
+    if(!existingIds.has(String(order.id))){
+      const time=new Date(order.completedAt||order.timestamp)
+        .toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+      const itemsText=(order.items||[]).map(i=>`${i.name}×${i.qty}`).join('・');
+      const el=document.createElement('div');
+      el.className='done-feed-item';
+      el.dataset.id=String(order.id);
+      el.innerHTML=`
+        <div class="done-feed-num"># ${order.orderNum||'?'}</div>
+        <div class="done-feed-items">${esc(itemsText)}</div>
+        <div class="done-feed-time">完了 ${time}</div>
+      `;
+      // 先頭に挿入
+      if(feed.firstChild&&!feed.firstChild.classList?.contains('done-feed-empty')){
+        feed.insertBefore(el,feed.firstChild);
+      } else {
+        feed.innerHTML='';
+        feed.appendChild(el);
+      }
+    }
+  });
 }
 
 let _kitchenTimer=null;
