@@ -54,25 +54,33 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .share-open-btn{width:100%;padding:12px;background:white;border:2px solid var(--success);color:var(--success);border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;}
 
 /* ===================== ROLE SELECT ===================== */
-#role-screen{min-height:100vh;background:linear-gradient(160deg,#0a0f1e,#0f172a,#1a1040);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;}
-#role-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(37,99,235,.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 70%,rgba(124,58,237,.15) 0%,transparent 60%);pointer-events:none;}
+#role-screen{min-height:100vh;background:radial-gradient(ellipse at 25% 35%,#c8e600 0%,#a8c800 45%,#88aa00 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;}
 #role-screen.show{display:flex;}
-.role-header{text-align:center;color:white;margin-bottom:40px;position:relative;}
-.role-header .store-name{font-size:30px;font-weight:900;margin-bottom:10px;letter-spacing:-0.5px;text-shadow:0 2px 20px rgba(255,255,255,.2);}
+/* 燕・虹のアニメーション */
+@keyframes sw-f1{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(2px,-8px) rotate(-2deg)}}
+@keyframes sw-f2{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(-3px,-6px) rotate(2deg)}}
+@keyframes sw-f3{0%,100%{transform:translate(0,0)}50%{transform:translate(3px,-10px)}}
+@keyframes sw-f4{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(-2px,-7px) rotate(-3deg)}}
+.sw-a1{animation:sw-f1 3.8s ease-in-out infinite;}
+.sw-a2{animation:sw-f2 4.6s ease-in-out infinite .5s;}
+.sw-a3{animation:sw-f3 3.3s ease-in-out infinite 1s;}
+.sw-a4{animation:sw-f4 5.1s ease-in-out infinite .3s;}
+.sw-a5{animation:sw-f1 4.3s ease-in-out infinite 1.6s;}
+/* ホーム画面テキスト */
+.role-header{text-align:center;margin-bottom:32px;position:relative;z-index:2;}
+.role-header .store-name{font-size:28px;font-weight:900;color:#003d33;margin-bottom:8px;letter-spacing:1px;text-shadow:0 1px 0 rgba(255,255,255,.4);}
 .role-header .role-day-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:700;}
-.role-day-open{background:rgba(187,247,208,.15);color:#86efac;border:1px solid rgba(134,239,172,.3);}
-.role-day-closed{background:rgba(254,226,226,.12);color:#fca5a5;border:1px solid rgba(252,165,165,.25);}
-.role-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;max-width:500px;}
+.role-day-open{background:rgba(0,105,92,.2);color:#004d40;border:1.5px solid rgba(0,105,92,.4);}
+.role-day-closed{background:rgba(183,28,28,.15);color:#7f0000;border:1.5px solid rgba(183,28,28,.3);}
+.role-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;max-width:500px;position:relative;z-index:2;}
 @media(min-width:600px){.role-cards{grid-template-columns:repeat(4,1fr);max-width:780px;}}
-.role-card{background:rgba(255,255,255,.06);backdrop-filter:blur(12px);border-radius:20px;padding:28px 12px 22px;text-align:center;cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);border:1.5px solid rgba(255,255,255,.1);position:relative;overflow:hidden;}
-.role-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;border-radius:20px;}
-.role-card:hover:not(.disabled){transform:translateY(-6px) scale(1.03);border-color:rgba(255,255,255,.3);box-shadow:0 20px 40px rgba(0,0,0,.4);}
-.role-card:hover:not(.disabled)::before{opacity:1;}
+.role-card{background:rgba(255,255,255,.78);backdrop-filter:blur(8px);border-radius:20px;padding:26px 12px 20px;text-align:center;cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);border:2px solid rgba(255,255,255,.9);position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(0,80,60,.15);}
+.role-card:hover:not(.disabled){transform:translateY(-6px) scale(1.04);box-shadow:0 16px 36px rgba(0,80,60,.25);border-color:rgba(0,150,120,.5);}
 .role-card:active:not(.disabled){transform:translateY(-2px) scale(1.01);}
-.role-card.disabled{opacity:.35;cursor:not-allowed;}
-.role-card .rc-icon{font-size:44px;margin-bottom:14px;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3));}
-.role-card .rc-title{font-size:16px;font-weight:800;color:white;margin-bottom:5px;}
-.role-card .rc-desc{font-size:11px;color:rgba(255,255,255,.55);line-height:1.5;}
+.role-card.disabled{opacity:.4;cursor:not-allowed;}
+.role-card .rc-icon{font-size:42px;margin-bottom:12px;display:block;}
+.role-card .rc-title{font-size:16px;font-weight:900;color:#004d40;margin-bottom:4px;}
+.role-card .rc-desc{font-size:11px;color:#00695c;line-height:1.5;}
 .role-card.cashier-card{background:linear-gradient(135deg,rgba(37,99,235,.25),rgba(29,78,216,.15));}
 .role-card.cashier-card::before{background:linear-gradient(135deg,rgba(37,99,235,.4),rgba(29,78,216,.25));}
 .role-card.cashier-card:hover:not(.disabled){border-color:rgba(96,165,250,.5);box-shadow:0 20px 40px rgba(37,99,235,.3);}
@@ -459,13 +467,97 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 
 <!-- ============ ROLE SELECT ============ -->
 <div id="role-screen">
+
+  <!-- 燕＆虹 背景SVG -->
+  <svg id="role-bg-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <!-- 光彩 -->
+    <ellipse cx="200" cy="180" rx="340" ry="260" fill="#d4f000" opacity="0.45"/>
+    <ellipse cx="650" cy="460" rx="260" ry="210" fill="#8ab000" opacity="0.35"/>
+    <!-- 虹アーク -->
+    <path d="M-40,650 Q400,-100 840,650" fill="none" stroke="#e53935" stroke-width="20" opacity="0.3"/>
+    <path d="M-40,650 Q400,-78  840,650" fill="none" stroke="#fb8c00" stroke-width="18" opacity="0.32"/>
+    <path d="M-40,650 Q400,-58  840,650" fill="none" stroke="#fdd835" stroke-width="16" opacity="0.34"/>
+    <path d="M-40,650 Q400,-38  840,650" fill="none" stroke="#66bb6a" stroke-width="16" opacity="0.28"/>
+    <path d="M-40,650 Q400,-20  840,650" fill="none" stroke="#29b6f6" stroke-width="18" opacity="0.32"/>
+    <path d="M-40,650 Q400,-2   840,650" fill="none" stroke="#ab47bc" stroke-width="16" opacity="0.28"/>
+    <!-- 燕シルエット共通パス定義: 右向き飛翔、100x60想定 -->
+    <!-- 大燕（左上） -->
+    <g class="sw-a2" style="transform-origin:108px 115px">
+      <g transform="translate(30,72) scale(1.1) rotate(18,75,42)">
+        <path d="M75,32 C58,16 35,6 6,2 C22,16 32,26 34,38 C24,28 12,22 0,24 C14,32 28,36 34,44 Z" fill="#0097a7" opacity="0.82"/>
+        <path d="M75,32 C90,18 108,10 128,8 C114,20 106,28 104,38 C112,30 120,26 130,28 C118,34 108,38 104,44 Z" fill="#0097a7" opacity="0.82"/>
+        <path d="M75,32 C62,20 46,12 24,8 C36,20 42,28 42,38 C34,30 26,26 16,28 C26,34 38,38 40,44 Z" fill="#26c6da" opacity="0.55"/>
+        <path d="M75,32 C86,22 100,14 116,12 C106,22 100,30 100,38 C106,32 114,28 122,30 C112,36 104,40 100,44 Z" fill="#26c6da" opacity="0.5"/>
+        <ellipse cx="75" cy="42" rx="22" ry="10" fill="#00838f"/>
+        <ellipse cx="75" cy="47" rx="14" ry="7" fill="#e0f7fa" opacity="0.45"/>
+        <ellipse cx="95" cy="30" rx="11" ry="10" fill="#00838f"/>
+        <path d="M107,28 L117,26 L107,32 Z" fill="#00695c"/>
+        <path d="M56,46 C42,54 28,66 14,82" stroke="#00838f" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M58,44 C46,38 32,28 16,14" stroke="#00838f" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M56,46 C44,56 32,68 20,84" stroke="#4dd0e1" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+        <path d="M58,44 C48,36 36,26 22,12" stroke="#4dd0e1" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+      </g>
+    </g>
+    <!-- メイン大燕（中央上） -->
+    <g class="sw-a1" style="transform-origin:390px 100px">
+      <g transform="translate(255,28) scale(1.6) rotate(-5,75,42)">
+        <path d="M75,32 C58,16 35,6 6,2 C22,16 32,26 34,38 C24,28 12,22 0,24 C14,32 28,36 34,44 Z" fill="#00897b" opacity="0.9"/>
+        <path d="M75,32 C90,18 108,10 128,8 C114,20 106,28 104,38 C112,30 120,26 130,28 C118,34 108,38 104,44 Z" fill="#00897b" opacity="0.9"/>
+        <path d="M75,32 C62,20 46,12 24,8 C36,20 42,28 42,38 C34,30 26,26 16,28 C26,34 38,38 40,44 Z" fill="#4dd0e1" opacity="0.6"/>
+        <path d="M75,32 C86,22 100,14 116,12 C106,22 100,30 100,38 C106,32 114,28 122,30 C112,36 104,40 100,44 Z" fill="#4dd0e1" opacity="0.55"/>
+        <ellipse cx="75" cy="42" rx="22" ry="10" fill="#006064"/>
+        <ellipse cx="75" cy="47" rx="14" ry="7" fill="#e0f7fa" opacity="0.5"/>
+        <ellipse cx="95" cy="30" rx="11" ry="10" fill="#006064"/>
+        <path d="M107,28 L117,26 L107,32 Z" fill="#004d40"/>
+        <path d="M56,46 C42,54 28,66 14,82" stroke="#006064" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M58,44 C46,38 32,28 16,14" stroke="#006064" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M56,46 C44,56 32,68 20,84" stroke="#26c6da" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+        <path d="M58,44 C48,36 36,26 22,12" stroke="#26c6da" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+      </g>
+    </g>
+    <!-- 右上の小燕 -->
+    <g class="sw-a3" style="transform-origin:670px 85px">
+      <g transform="translate(618,54) scale(0.7) rotate(-10,75,42)">
+        <path d="M75,32 C58,16 35,6 6,2 C22,16 32,26 34,38 C24,28 12,22 0,24 C14,32 28,36 34,44 Z" fill="#26c6da" opacity="0.75"/>
+        <path d="M75,32 C90,18 108,10 128,8 C114,20 106,28 104,38 C112,30 120,26 130,28 C118,34 108,38 104,44 Z" fill="#26c6da" opacity="0.75"/>
+        <ellipse cx="75" cy="42" rx="22" ry="10" fill="#0097a7"/>
+        <ellipse cx="95" cy="30" rx="11" ry="10" fill="#0097a7"/>
+        <path d="M107,28 L117,26 L107,32 Z" fill="#00695c"/>
+        <path d="M56,46 C42,54 28,66 14,82" stroke="#0097a7" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+        <path d="M58,44 C46,38 32,28 16,14" stroke="#0097a7" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+      </g>
+    </g>
+    <!-- 右中の小燕 -->
+    <g class="sw-a4" style="transform-origin:720px 200px">
+      <g transform="translate(686,174) scale(0.48) rotate(12,75,42)">
+        <path d="M75,32 C58,16 35,6 6,2 C22,16 32,26 34,38 C24,28 12,22 0,24 C14,32 28,36 34,44 Z" fill="#4dd0e1" opacity="0.7"/>
+        <path d="M75,32 C90,18 108,10 128,8 C114,20 106,28 104,38 C112,30 120,26 130,28 C118,34 108,38 104,44 Z" fill="#4dd0e1" opacity="0.7"/>
+        <ellipse cx="75" cy="42" rx="22" ry="10" fill="#00838f"/>
+        <ellipse cx="95" cy="30" rx="11" ry="10" fill="#00838f"/>
+        <path d="M56,46 C42,54 28,66 14,82" stroke="#00838f" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M58,44 C46,38 32,28 16,14" stroke="#00838f" stroke-width="5" fill="none" stroke-linecap="round"/>
+      </g>
+    </g>
+    <!-- 左下の小燕 -->
+    <g class="sw-a5" style="transform-origin:85px 310px">
+      <g transform="translate(32,282) scale(0.55) rotate(25,75,42)">
+        <path d="M75,32 C58,16 35,6 6,2 C22,16 32,26 34,38 C24,28 12,22 0,24 C14,32 28,36 34,44 Z" fill="#00acc1" opacity="0.65"/>
+        <path d="M75,32 C90,18 108,10 128,8 C114,20 106,28 104,38 C112,30 120,26 130,28 C118,34 108,38 104,44 Z" fill="#00acc1" opacity="0.65"/>
+        <ellipse cx="75" cy="42" rx="22" ry="10" fill="#00838f"/>
+        <ellipse cx="95" cy="30" rx="11" ry="10" fill="#00838f"/>
+        <path d="M56,46 C42,54 28,66 14,82" stroke="#00838f" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M58,44 C46,38 32,28 16,14" stroke="#00838f" stroke-width="5" fill="none" stroke-linecap="round"/>
+      </g>
+    </g>
+  </svg>
+
   <div class="role-header">
-    <div id="role-clock" style="font-size:48px;font-weight:900;color:white;letter-spacing:2px;font-variant-numeric:tabular-nums;text-shadow:0 4px 24px rgba(0,0,0,.4);line-height:1;margin-bottom:6px;">00:00:00</div>
-    <div id="role-date" style="font-size:13px;color:rgba(255,255,255,.55);margin-bottom:16px;font-weight:600;"></div>
+    <div id="role-clock" style="font-size:48px;font-weight:900;color:#003d33;letter-spacing:2px;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 rgba(255,255,255,.5);line-height:1;margin-bottom:4px;">00:00:00</div>
+    <div id="role-date" style="font-size:13px;color:#00695c;margin-bottom:14px;font-weight:700;"></div>
     <div class="store-name" id="role-store-name">学園祭会計</div>
-    <div style="margin-top:8px;display:flex;align-items:center;gap:10px;justify-content:center;">
+    <div style="margin-top:6px;display:flex;align-items:center;gap:10px;justify-content:center;">
       <div id="role-day-badge" class="role-day-badge role-day-closed">クローズ中</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.6);">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#00695c;font-weight:600;">
         <span class="conn-dot" id="role-conn-dot"></span>
         <span id="role-conn-label">接続中...</span>
       </div>
@@ -482,7 +574,7 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
       <div class="rc-title">調理</div>
       <div class="rc-desc">注文を確認して料理を作る</div>
     </div>
-    <div class="role-card pos-card" id="role-pos" onclick="enterPos()" style="border-color:#99f6e4;">
+    <div class="role-card pos-card" id="role-pos" onclick="enterPos()">
       <div class="rc-icon">📋</div>
       <div class="rc-title">POS管理</div>
       <div class="rc-desc">メニュー追加・在庫管理を行う</div>
@@ -493,7 +585,7 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
       <div class="rc-desc">売上データ・店舗設定を確認する</div>
     </div>
   </div>
-  <div class="role-closed-notice" id="role-closed-notice" style="display:none;">
+  <div class="role-closed-notice" id="role-closed-notice" style="display:none;background:rgba(183,28,28,.15);color:#7f0000;border:1.5px solid rgba(183,28,28,.3);border-radius:12px;padding:12px 20px;margin-top:16px;font-weight:700;font-size:14px;">
     ⚠️ 現在クローズ中です。<strong>管理画面</strong>からオープンしてください。
   </div>
 </div>
@@ -1971,7 +2063,7 @@ function showMenuEditModal(id){
   // 構成品を復元
   const list=document.getElementById('e-components-list');
   list.innerHTML='';
-  if(isSet&&item.components){
+  if(item.isSet&&item.components){
     item.components.forEach(c=>addComponentRow(c.id,c.qty));
   }
   document.getElementById('menu-edit-modal-overlay').classList.add('show');
