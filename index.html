@@ -798,13 +798,19 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
     <div class="quick-cash-btns" id="quick-cash-btns"></div>
     <div class="change-box" id="change-display"><div class="change-label">お釣り</div><div class="change-amount" id="change-amount">¥0</div></div>
     <!-- 整理券割当 -->
-    <div id="ticket-assign-group" style="display:none;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:13px;margin-top:12px;">
-      <div style="font-size:13px;font-weight:800;color:#166534;margin-bottom:9px;">🎫 整理券番号を割り当て（任意）</div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px;" id="ticket-quick-btns"></div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="number" id="ticket-num-input" placeholder="番号を入力" min="1" style="width:100px;padding:8px 10px;border:2px solid #86efac;border-radius:9px;font-size:20px;font-weight:900;text-align:center;outline:none;color:#166534;" oninput="highlightTicketBtn()">
-        <span style="font-size:12px;color:var(--gray);">手入力も可</span>
-        <button type="button" class="btn btn-ghost" style="margin-left:auto;padding:6px 10px;font-size:12px;" onclick="clearTicketNum()">✕ なし</button>
+    <div id="ticket-assign-group" style="display:none;border:2px solid #86efac;border-radius:14px;overflow:hidden;margin-top:14px;">
+      <div style="background:#f0fdf4;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:13px;font-weight:800;color:#166534;">🎫 整理券番号を選択（任意）</div>
+        <button type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="clearTicketNum()">✕ 選択解除</button>
+      </div>
+      <div style="padding:12px;background:white;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:8px;" id="ticket-quick-btns"></div>
+        <div id="ticket-no-tickets-msg" style="display:none;text-align:center;color:var(--gray);font-size:13px;padding:12px 0;">整理券が登録されていません</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:var(--gray);white-space:nowrap;">手入力:</span>
+          <input type="number" id="ticket-num-input" placeholder="番号" min="1" style="width:80px;padding:7px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-weight:800;text-align:center;outline:none;" oninput="highlightTicketBtn()">
+          <div id="ticket-selected-display" style="font-size:13px;font-weight:700;color:#166534;"></div>
+        </div>
       </div>
     </div>
     <div class="modal-actions">
@@ -1534,20 +1540,35 @@ function showPaymentModal(){
   document.getElementById('cash-input').value='';
   document.getElementById('change-display').style.display='none';
   document.getElementById('confirm-pay-btn').disabled=true;
-  // 整理券クイックボタン
-  const availTickets=Object.values(S.ticketsSnap).filter(t=>t.status==='available').sort((a,b)=>a.num-b.num);
+  // 整理券ボタン（全番号表示・使用中は薄く）
+  const allTickets=Object.values(S.ticketsSnap).sort((a,b)=>a.num-b.num);
   const tg=document.getElementById('ticket-assign-group');
   const tqb=document.getElementById('ticket-quick-btns');
   const tni=document.getElementById('ticket-num-input');
-  if(tg&&tqb&&tni){
-    tni.value='';
-    if(availTickets.length>0){
-      tg.style.display='block';
-      tqb.innerHTML=availTickets.slice(0,10).map(t=>
-        `<button type="button" class="qc-btn" id="tqb-${t.num}" style="background:#dcfce7;border-color:#86efac;color:#166534;font-weight:900;" onclick="selectTicketNum(${t.num})">No.${t.num}</button>`
-      ).join('');
+  const noMsg=document.getElementById('ticket-no-tickets-msg');
+  if(tg){
+    tg.style.display='block';
+    if(tni) tni.value='';
+    const dispEl=document.getElementById('ticket-selected-display');
+    if(dispEl) dispEl.textContent='';
+    if(allTickets.length===0){
+      if(tqb) tqb.innerHTML='';
+      if(noMsg) noMsg.style.display='block';
     } else {
-      tg.style.display='none';
+      if(noMsg) noMsg.style.display='none';
+      if(tqb) tqb.innerHTML=allTickets.map(t=>{
+        const isUsed=t.status!=='available';
+        return `<button type="button" id="tqb-${t.num}"
+          ${isUsed?'':'onclick="selectTicketNum('+t.num+')"'}
+          style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+            padding:8px 4px;border-radius:10px;border:2px solid;
+            font-size:15px;font-weight:900;line-height:1.2;cursor:${isUsed?'default':'pointer'};
+            min-height:54px;transition:all .15s;
+            ${isUsed?'background:#f8fafc;border-color:#e2e8f0;color:#cbd5e1;':'background:#f0fdf4;border-color:#86efac;color:#166534;'}">
+          <span>${t.num}</span>
+          <span style="font-size:9px;font-weight:700;margin-top:2px;">${isUsed?'使用中':'空き'}</span>
+        </button>`;
+      }).join('');
     }
   }
   document.getElementById('payment-modal-overlay').classList.add('show');
@@ -1564,12 +1585,20 @@ function selectTicketNum(num){
   highlightTicketBtn();
 }
 function highlightTicketBtn(){
-  const val=document.getElementById('ticket-num-input')?.value;
+  const val=String(document.getElementById('ticket-num-input')?.value||'');
+  const dispEl=document.getElementById('ticket-selected-display');
+  if(dispEl) dispEl.textContent=val?`✅ No.${val} を選択中`:'';
   document.querySelectorAll('[id^="tqb-"]').forEach(b=>{
     const n=b.id.replace('tqb-','');
-    b.style.background= n===val ?'#16a34a':'#dcfce7';
-    b.style.color= n===val ?'white':'#166534';
-    b.style.borderColor= n===val ?'#16a34a':'#86efac';
+    const isSelected=n===val;
+    const isUsed=b.style.cursor==='default';
+    if(!isUsed){
+      b.style.background=isSelected?'#16a34a':'#f0fdf4';
+      b.style.color=isSelected?'white':'#166534';
+      b.style.borderColor=isSelected?'#16a34a':'#86efac';
+      b.style.transform=isSelected?'scale(1.08)':'scale(1)';
+      b.style.boxShadow=isSelected?'0 4px 12px rgba(22,163,74,.35)':'none';
+    }
   });
 }
 function clearTicketNum(){
@@ -1823,10 +1852,10 @@ async function completeOrder(orderId){
   const order=S.ordersSnap[orderId];
   await db.ref(`${ROOT}/orders/${orderId}/status`).set('completed');
   await db.ref(`${ROOT}/orders/${orderId}/completedAt`).set(new Date().toISOString());
-  // 整理券がある場合は「呼び出し中」に自動変更（お客様に知らせる）
+  // 整理券がある場合は「空き」に戻す（次のお客さんが使えるよう再利用）
   if(order?.ticketNum!=null){
     const tk=Object.values(S.ticketsSnap).find(t=>t.num===order.ticketNum);
-    if(tk) await db.ref(`${ROOT}/tickets/${tk.id}/status`).set('called');
+    if(tk) await db.ref(`${ROOT}/tickets/${tk.id}`).update({status:'available',orderId:null});
   }
   showToast('注文を完了しました ✅','success');
 }
@@ -1866,29 +1895,27 @@ function renderAdminTickets(){
   const el=document.getElementById('acontent-tickets');
   if(!el) return;
   const tickets=Object.values(S.ticketsSnap).sort((a,b)=>a.num-b.num);
-  const available=tickets.filter(t=>t.status==='available');
-  const inUse=tickets.filter(t=>t.status==='in_use');
-  const called=tickets.filter(t=>t.status==='called');
-  const done=tickets.filter(t=>t.status==='done');
   const maxNum=tickets.length>0?Math.max(...tickets.map(t=>t.num)):0;
+  const cntAvail=tickets.filter(t=>t.status==='available').length;
+  const cntUse=tickets.filter(t=>t.status==='in_use').length;
+  const cntCall=tickets.filter(t=>t.status==='called').length;
+  const cntDone=tickets.filter(t=>t.status==='done').length;
+
+  const statusConf={
+    available:{label:'空き',   icon:'✅',color:'#15803d',bg:'#f0fdf4',border:'#86efac'},
+    in_use:   {label:'使用中', icon:'🍳',color:'#c2410c',bg:'#fff7ed',border:'#fdba74'},
+    called:   {label:'呼出中', icon:'📢',color:'#1e40af',bg:'#eff6ff',border:'#93c5fd'},
+    done:     {label:'完了',   icon:'🏁',color:'#64748b',bg:'#f8fafc',border:'#e2e8f0'},
+  };
 
   let html=`<div class="card">
-    <div class="sec-hdr"><h3>🎫 整理券管理</h3>
+    <div class="sec-hdr"><h3>🎫 整理券一覧</h3>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary" onclick="addTicket()">＋ 1枚発行</button>
-        <button class="btn btn-ghost" onclick="showBulkAddTickets()">📋 まとめて発行</button>
+        <button class="btn btn-primary" onclick="addTicket()">＋ 追加</button>
+        <button class="btn btn-ghost" onclick="showBulkAddTickets()">📋 まとめて</button>
       </div>
     </div>
-    <p style="font-size:12px;color:var(--gray);margin:-4px 0 12px;">
-      空き → <b>会計で割当</b> → 使用中 → <b>調理完了で自動</b> → 呼び出し中 → <b>お客様受取</b> → 完了
-    </p>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#f8fafc;border-radius:10px;margin-bottom:14px;">
-      <span style="font-size:13px;font-weight:700;color:#475569;">次の番号:</span>
-      <strong style="color:var(--primary);font-size:16px;">No.${maxNum+1}</strong>
-      <span style="margin-left:6px;font-size:12px;color:var(--gray);">空き: ${available.length} / 使用中: ${inUse.length} / 呼出: ${called.length}</span>
-      <button class="btn btn-ghost" style="margin-left:auto;font-size:12px;" onclick="resetTickets()">🗑️ 全リセット</button>
-    </div>
-    <!-- まとめて発行エリア（初期非表示） -->
+    <!-- まとめて発行エリア -->
     <div id="bulk-add-area" style="display:none;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:14px;">
       <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:9px;">📋 まとめて発行</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -1898,72 +1925,42 @@ function renderAdminTickets(){
           <span style="font-size:13px;font-weight:700;">〜 No.</span>
           <input type="number" id="bulk-to" min="1" value="${maxNum+10}" style="width:72px;padding:6px 8px;border:1.5px solid #bae6fd;border-radius:7px;font-size:14px;text-align:center;outline:none;">
         </div>
-        <button class="btn btn-primary" style="background:#0369a1;" onclick="bulkAddTickets()">まとめて発行</button>
+        <button class="btn btn-primary" style="background:#0369a1;" onclick="bulkAddTickets()">発行</button>
         <button class="btn btn-ghost" onclick="document.getElementById('bulk-add-area').style.display='none'">閉じる</button>
       </div>
+    </div>
+    <!-- サマリーバー -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:#f8fafc;border-radius:10px;align-items:center;">
+      <span style="font-size:12px;color:var(--gray);">✅ 空き <b>${cntAvail}</b></span>
+      <span style="font-size:12px;color:#c2410c;">🍳 使用中 <b>${cntUse}</b></span>
+      <span style="font-size:12px;color:#1e40af;">📢 呼出 <b>${cntCall}</b></span>
+      <span style="font-size:12px;color:var(--gray);">🏁 完了 <b>${cntDone}</b></span>
+      <button class="btn btn-ghost" style="margin-left:auto;font-size:11px;padding:4px 10px;" onclick="resetTickets()">🗑️ 全リセット</button>
     </div>`;
 
   if(tickets.length===0){
-    html+=`<div class="empty-state"><div class="icon">🎫</div><p>整理券がありません<br>「＋ 1枚発行」か「まとめて発行」で追加できます</p></div>`;
+    html+=`<div class="empty-state"><div class="icon">🎫</div><p>整理券がありません<br>「＋ 追加」か「まとめて」で発行できます</p></div>`;
   } else {
-    // 空き
-    if(available.length>0){
-      html+=`<div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#15803d;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">✅ 空き (${available.length})</div>
-        <div class="srq-list">`;
-      available.forEach(t=>{
-        html+=`<div class="srq-chip available">
-          <span>🎫 No.${t.num}</span>
-          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
-        </div>`;
-      });
-      html+=`</div></div>`;
-    }
-    // 使用中
-    if(inUse.length>0){
-      html+=`<div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#c2410c;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">🍳 使用中 (${inUse.length})</div>
-        <div class="srq-list">`;
-      inUse.forEach(t=>{
-        const order=t.orderId?S.ordersSnap[t.orderId]:null;
-        const orderStr=order?` (注文 #${order.orderNum})`:'';
-        html+=`<div class="srq-chip in_use">
-          <span>🎫 No.${t.num}${esc(orderStr)}</span>
-          <button onclick="callTicket('${t.id}')" title="呼び出し">📢</button>
-          <button onclick="freeTicket('${t.id}')" title="空きに戻す">↩</button>
-          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
-        </div>`;
-      });
-      html+=`</div></div>`;
-    }
-    // 呼び出し中
-    if(called.length>0){
-      html+=`<div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#14532d;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">📢 呼び出し中 (${called.length})</div>
-        <div class="srq-list">`;
-      called.forEach(t=>{
-        html+=`<div class="srq-chip called">
-          <span>📢 No.${t.num}</span>
-          <button onclick="doneTicket('${t.id}')" title="受取完了">✅</button>
-          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
-        </div>`;
-      });
-      html+=`</div></div>`;
-    }
-    // 完了済み
-    if(done.length>0){
-      html+=`<div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">🏁 完了済み (${done.length})</div>
-        <div class="srq-list">`;
-      done.forEach(t=>{
-        html+=`<div class="srq-chip done">
-          <span>✅ No.${t.num}</span>
-          <button onclick="freeTicket('${t.id}')" title="空きに戻す">↩</button>
-          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
-        </div>`;
-      });
-      html+=`</div></div>`;
-    }
+    // フラットグリッド
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;">`;
+    tickets.forEach(t=>{
+      const sc=statusConf[t.status]||statusConf.done;
+      const order=t.orderId?S.ordersSnap[t.orderId]:null;
+      const orderLabel=order?`#${order.orderNum}`:'';
+      // アクションボタン
+      let actions='';
+      if(t.status==='in_use')  actions+=`<button onclick="callTicket('${t.id}')" title="呼び出し" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px;">📢</button>`;
+      if(t.status==='called')  actions+=`<button onclick="doneTicket('${t.id}')" title="完了" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px;">✅</button>`;
+      if(t.status!=='available') actions+=`<button onclick="freeTicket('${t.id}')" title="空きに戻す" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px;opacity:.7;">↩</button>`;
+      actions+=`<button onclick="deleteTicket('${t.id}')" title="削除" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px;opacity:.6;color:var(--danger);">✕</button>`;
+      html+=`<div style="background:${sc.bg};border:2px solid ${sc.border};border-radius:12px;padding:10px 8px;text-align:center;">
+        <div style="font-size:10px;font-weight:800;color:${sc.color};margin-bottom:3px;">${sc.icon} ${sc.label}</div>
+        <div style="font-size:22px;font-weight:900;color:${sc.color};line-height:1;">No.${t.num}</div>
+        ${orderLabel?`<div style="font-size:10px;color:var(--gray);margin-top:2px;">注文${orderLabel}</div>`:''}
+        <div style="display:flex;justify-content:center;gap:2px;margin-top:6px;">${actions}</div>
+      </div>`;
+    });
+    html+=`</div>`;
   }
   html+=`</div>`;
   el.innerHTML=html;
