@@ -74,23 +74,36 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .role-day-closed{background:#7f1d1d;color:#fee2e2;border:none;font-weight:800;}
 .role-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;max-width:520px;position:relative;z-index:2;}
 @media(min-width:600px){.role-cards{grid-template-columns:repeat(4,1fr);max-width:820px;}}
-.role-card{background:rgba(255,255,255,.92);border-radius:20px;padding:28px 14px 22px;text-align:center;cursor:pointer;transition:all .22s cubic-bezier(.34,1.56,.64,1);border:3px solid rgba(255,255,255,.95);position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(0,60,40,.22);}
+.role-card{border-radius:20px;padding:28px 14px 22px;text-align:center;cursor:pointer;transition:all .22s cubic-bezier(.34,1.56,.64,1);border:3px solid rgba(255,255,255,.95);position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(0,60,40,.22);}
 .role-card:hover:not(.disabled){transform:translateY(-8px) scale(1.05);box-shadow:0 20px 40px rgba(0,60,40,.32);}
 .role-card:active:not(.disabled){transform:translateY(-2px) scale(1.01);}
 .role-card.disabled{opacity:.4;cursor:not-allowed;}
 .role-card .rc-icon{font-size:44px;margin-bottom:12px;display:block;}
-.role-card .rc-title{font-size:18px;font-weight:900;color:#111827;margin-bottom:5px;letter-spacing:.3px;}
-.role-card .rc-desc{font-size:12px;color:#374151;line-height:1.5;font-weight:600;}
+.role-card .rc-title{font-size:18px;font-weight:900;margin-bottom:5px;letter-spacing:.3px;}
+.role-card .rc-desc{font-size:12px;line-height:1.5;font-weight:600;}
+/* カードごとの個別カラー */
+.role-card.cashier-card{background:#dbeafe;border-color:#bfdbfe;}
+.role-card.cashier-card .rc-title{color:#1e3a8a;}
+.role-card.cashier-card .rc-desc{color:#1d4ed8;}
+.role-card.cashier-card:hover:not(.disabled){background:#bfdbfe;border-color:#93c5fd;box-shadow:0 20px 40px rgba(37,99,235,.3);}
+.role-card.kitchen-card{background:#ffedd5;border-color:#fed7aa;}
+.role-card.kitchen-card .rc-title{color:#7c2d12;}
+.role-card.kitchen-card .rc-desc{color:#c2410c;}
+.role-card.kitchen-card:hover:not(.disabled){background:#fed7aa;border-color:#fdba74;box-shadow:0 20px 40px rgba(234,88,12,.3);}
+.role-card.pos-card{background:#ccfbf1;border-color:#99f6e4;}
+.role-card.pos-card .rc-title{color:#134e4a;}
+.role-card.pos-card .rc-desc{color:#0f766e;}
+.role-card.pos-card:hover:not(.disabled){background:#99f6e4;border-color:#5eead4;box-shadow:0 20px 40px rgba(13,148,136,.3);}
+.role-card.admin-card{background:#f1f5f9;border-color:#e2e8f0;}
+.role-card.admin-card .rc-title{color:#1e293b;}
+.role-card.admin-card .rc-desc{color:#475569;}
+.role-card.admin-card:hover:not(.disabled){background:#e2e8f0;border-color:#cbd5e1;box-shadow:0 20px 40px rgba(71,85,105,.3);}
 /* カード上部のカラーバー */
 .role-card::after{content:'';position:absolute;top:0;left:0;right:0;height:5px;border-radius:20px 20px 0 0;}
 .role-card.cashier-card::after{background:#2563eb;}
 .role-card.kitchen-card::after{background:#ea580c;}
 .role-card.pos-card::after{background:#0d9488;}
 .role-card.admin-card::after{background:#64748b;}
-.role-card.cashier-card:hover:not(.disabled){border-color:#93c5fd;box-shadow:0 20px 40px rgba(37,99,235,.25);}
-.role-card.kitchen-card:hover:not(.disabled){border-color:#fdba74;box-shadow:0 20px 40px rgba(234,88,12,.2);}
-.role-card.pos-card:hover:not(.disabled){border-color:#5eead4;box-shadow:0 20px 40px rgba(13,148,136,.2);}
-.role-card.admin-card:hover:not(.disabled){border-color:#cbd5e1;box-shadow:0 20px 40px rgba(71,85,105,.2);}
 .role-closed-notice{margin-top:20px;background:rgba(255,255,255,.06);border-radius:12px;padding:12px 20px;color:rgba(255,255,255,.5);font-size:13px;text-align:center;border:1px solid rgba(255,255,255,.1);}
 .role-closed-notice strong{color:rgba(255,255,255,.8);}
 
