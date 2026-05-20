@@ -186,55 +186,86 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .co-back-btn:hover{background:#475569;}
 
 /* ===================== KITCHEN SCREEN ===================== */
+/* ===================== KITCHEN SCREEN ===================== */
 #kitchen-screen{display:none;}
 #kitchen-screen.show{display:block;}
-.kitchen-body{padding:14px;max-width:1100px;margin:0 auto;}
-.kitchen-layout{display:flex;gap:12px;align-items:flex-start;}
-.kitchen-main{flex:2;min-width:0;}
-.kitchen-side{flex:0 0 200px;min-width:0;position:sticky;top:64px;max-height:calc(100vh - 80px);display:flex;flex-direction:column;}
-@media(max-width:600px){.kitchen-layout{flex-direction:column;}.kitchen-side{flex:none;width:100%;position:static;max-height:280px;}}
-.kitchen-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
-.kitchen-toolbar h2{font-size:16px;font-weight:800;color:#1e293b;}
-.kitchen-side-header{font-size:12px;font-weight:800;color:var(--gray);padding:8px 12px;background:white;border-radius:12px 12px 0 0;border:1px solid var(--border);border-bottom:none;letter-spacing:.5px;text-transform:uppercase;}
-#kitchen-done-feed{background:white;border:1px solid var(--border);border-radius:0 0 12px 12px;overflow-y:auto;flex:1;max-height:calc(100vh - 140px);}
-.done-feed-item{padding:10px 12px;border-bottom:1px solid var(--border);animation:feedIn .3s ease;transition:opacity .4s,transform .4s;}
+.kitchen-body{padding:16px;max-width:1600px;margin:0 auto;}
+.kitchen-layout{display:flex;gap:16px;align-items:flex-start;}
+.kitchen-main{flex:1;min-width:0;}
+.kitchen-side{flex:0 0 280px;min-width:0;position:sticky;top:64px;max-height:calc(100vh - 80px);display:flex;flex-direction:column;gap:12px;}
+@media(max-width:768px){.kitchen-layout{flex-direction:column;}.kitchen-side{flex:none;width:100%;position:static;max-height:none;}}
+.kitchen-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;background:white;padding:14px 18px;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.kitchen-toolbar h2{font-size:18px;font-weight:900;color:#1e293b;}
+.kitchen-stats{display:flex;gap:8px;}
+.k-stat{background:#f8fafc;border-radius:10px;padding:6px 14px;font-size:13px;font-weight:700;color:#475569;border:1.5px solid #e2e8f0;}
+.k-stat.urgent{background:#fff7ed;color:#c2410c;border-color:#fed7aa;}
+.k-stat.critical{background:#fef2f2;color:#b91c1c;border-color:#fecaca;}
+.kitchen-side-box{background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.kitchen-side-header{font-size:12px;font-weight:800;color:#64748b;padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border);letter-spacing:.5px;text-transform:uppercase;}
+#kitchen-done-feed{overflow-y:auto;max-height:260px;}
+.done-feed-item{padding:10px 14px;border-bottom:1px solid var(--border);animation:feedIn .3s ease;transition:opacity .4s,transform .4s;}
 .done-feed-item:last-child{border-bottom:none;}
 .done-feed-item.removing{opacity:0;transform:translateY(10px);}
 @keyframes feedIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 .done-feed-num{font-size:15px;font-weight:900;color:#1e293b;}
 .done-feed-items{font-size:11px;color:var(--gray);margin-top:2px;line-height:1.5;}
 .done-feed-time{font-size:10px;color:#94a3b8;margin-top:3px;}
-.done-feed-empty{padding:24px 12px;text-align:center;color:#94a3b8;font-size:12px;font-weight:600;}
+.done-feed-empty{padding:20px 14px;text-align:center;color:#94a3b8;font-size:12px;font-weight:600;}
+/* 整理券パネル */
+#kitchen-ticket-panel{overflow-y:auto;max-height:340px;}
+.kt-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
+.kt-item:last-child{border-bottom:none;}
+.kt-num{font-size:22px;font-weight:900;color:#1e293b;min-width:44px;}
+.kt-status{flex:1;font-size:12px;font-weight:700;}
+.kt-status.waiting{color:#2563eb;}
+.kt-status.called{color:#16a34a;}
+.kt-status.done{color:#9ca3af;}
+.kt-badge{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;}
+.kt-badge.waiting{background:#dbeafe;color:#1d4ed8;}
+.kt-badge.called{background:#dcfce7;color:#15803d;}
+.kt-badge.done{background:#f1f5f9;color:#94a3b8;}
+.kt-empty{padding:20px 14px;text-align:center;color:#94a3b8;font-size:12px;font-weight:600;}
 
-#kitchen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
-.order-ticket{background:white;border-radius:18px;box-shadow:0 4px 16px rgba(0,0,0,.1);overflow:hidden;transition:all .25s;border:2px solid var(--border);}
+/* 注文チケット */
+#kitchen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+@media(min-width:1200px){#kitchen-grid{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:1600px){#kitchen-grid{grid-template-columns:repeat(4,1fr);}}
+.order-ticket{background:white;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden;transition:all .25s;border:2px solid var(--border);}
 .order-ticket.new{border-color:#a78bfa;animation:ticketIn .35s cubic-bezier(.34,1.56,.64,1);}
 .order-ticket.urgent{border-color:#f59e0b!important;}
 .order-ticket.critical{border-color:#ef4444!important;animation:pulse 1.5s infinite;}
-.order-ticket.done{opacity:.45;border-color:var(--border);}
+.order-ticket.done{opacity:.4;border-color:var(--border);}
 @keyframes ticketIn{from{transform:scale(.92) translateY(10px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
-@keyframes pulse{0%,100%{box-shadow:0 4px 16px rgba(239,68,68,.2);}50%{box-shadow:0 4px 24px rgba(239,68,68,.5);}}
-.ticket-header{background:var(--kitchen);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;}
+@keyframes pulse{0%,100%{box-shadow:0 4px 16px rgba(239,68,68,.2);}50%{box-shadow:0 4px 28px rgba(239,68,68,.6);}}
+.ticket-header{background:var(--kitchen);color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:flex-start;}
 .ticket-header.urgent-header{background:linear-gradient(135deg,#d97706,#b45309);}
 .ticket-header.critical-header{background:linear-gradient(135deg,#dc2626,#b91c1c);}
 .order-ticket.done .ticket-header{background:#9ca3af;}
-.ticket-num{font-size:22px;font-weight:900;letter-spacing:-0.5px;}
-.ticket-time{font-size:12px;opacity:.85;}
-.ticket-elapsed{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:3px 9px;border-radius:20px;font-size:12px;font-weight:800;margin-top:4px;}
-.ticket-items{padding:14px 16px;}
-.ticket-item-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:14px;}
+.ticket-num{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1;}
+.ticket-time{font-size:12px;opacity:.85;text-align:right;}
+.ticket-elapsed{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:20px;font-size:13px;font-weight:800;margin-top:5px;}
+.ticket-items{padding:14px 18px;}
+.ticket-item-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px;}
 .ticket-item-row:last-child{border-bottom:none;}
-.ticket-item-name{font-weight:800;font-size:15px;}
-.ticket-item-qty{background:#ede9fe;color:var(--kitchen);font-weight:900;padding:4px 12px;border-radius:20px;font-size:14px;}
+.ticket-item-name{font-weight:800;font-size:16px;}
+.ticket-item-qty{background:#ede9fe;color:var(--kitchen);font-weight:900;padding:5px 14px;border-radius:20px;font-size:15px;}
 .order-ticket.done .ticket-item-qty{background:#f3f4f6;color:var(--gray);}
-.ticket-footer{padding:10px 14px;border-top:1px solid var(--border);}
-.complete-btn{width:100%;padding:13px;background:var(--kitchen);color:white;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;transition:all .2s;letter-spacing:.3px;}
-.complete-btn:hover{background:#6d28d9;transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,58,237,.4);}
+.ticket-footer{padding:12px 16px;border-top:1px solid var(--border);}
+.complete-btn{width:100%;padding:14px;background:var(--kitchen);color:white;border:none;border-radius:12px;font-size:16px;font-weight:900;cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+.complete-btn:hover{background:#6d28d9;transform:translateY(-2px);box-shadow:0 6px 18px rgba(124,58,237,.4);}
 .complete-btn:active{transform:translateY(0);}
-.done-label{width:100%;padding:13px;background:#f3f4f6;color:#9ca3af;border:none;border-radius:12px;font-size:15px;font-weight:800;text-align:center;}
-.kitchen-empty{text-align:center;padding:60px 20px;color:var(--gray);grid-column:1/-1;}
-.kitchen-empty .icon{font-size:64px;margin-bottom:16px;}
-.kitchen-empty p{font-size:16px;font-weight:700;line-height:1.7;}
+.done-label{width:100%;padding:14px;background:#f3f4f6;color:#9ca3af;border:none;border-radius:12px;font-size:16px;font-weight:900;text-align:center;}
+.kitchen-empty{text-align:center;padding:80px 20px;color:var(--gray);grid-column:1/-1;}
+.kitchen-empty .icon{font-size:72px;margin-bottom:16px;}
+.kitchen-empty p{font-size:17px;font-weight:700;line-height:1.7;}
+/* 整理券管理（管理画面） */
+.srq-list{display:flex;flex-wrap:wrap;gap:8px;padding:14px;}
+.srq-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;font-weight:800;font-size:15px;border:2px solid;}
+.srq-chip.waiting{background:#dbeafe;border-color:#93c5fd;color:#1e3a8a;}
+.srq-chip.called{background:#dcfce7;border-color:#86efac;color:#14532d;}
+.srq-chip.done{background:#f1f5f9;border-color:#cbd5e1;color:#64748b;}
+.srq-chip button{background:none;border:none;cursor:pointer;font-size:13px;color:inherit;opacity:.6;padding:0;line-height:1;}
+.srq-chip button:hover{opacity:1;}
 
 /* ===================== ADMIN SCREEN ===================== */
 #admin-screen{display:none;}
@@ -675,12 +706,21 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
       <div class="kitchen-main">
         <div class="kitchen-toolbar">
           <h2 id="kitchen-title">未完了の注文</h2>
+          <div class="kitchen-stats" id="kitchen-stats"></div>
         </div>
         <div id="kitchen-grid"></div>
       </div>
       <div class="kitchen-side">
-        <div class="kitchen-side-header">✅ 完了済み</div>
-        <div id="kitchen-done-feed"></div>
+        <!-- 整理券パネル -->
+        <div class="kitchen-side-box">
+          <div class="kitchen-side-header">🎫 整理券</div>
+          <div id="kitchen-ticket-panel"><div class="kt-empty">整理券はありません</div></div>
+        </div>
+        <!-- 完了フィード -->
+        <div class="kitchen-side-box">
+          <div class="kitchen-side-header">✅ 完了済み</div>
+          <div id="kitchen-done-feed"><div class="done-feed-empty">まだ完了した注文はありません</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -732,10 +772,12 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
   <div class="admin-tab-nav">
     <button class="admin-tab-btn active" onclick="switchAdminTab('settings')" id="atab-settings">⚙️ 設定</button>
     <button class="admin-tab-btn" onclick="switchAdminTab('sales')" id="atab-sales">📊 売上</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('tickets')" id="atab-tickets">🎫 整理券</button>
   </div>
   <div class="admin-body">
     <div class="admin-tab-content active" id="acontent-settings"><div id="settings-content"></div></div>
     <div class="admin-tab-content" id="acontent-sales"><div id="sales-content"></div></div>
+    <div class="admin-tab-content" id="acontent-tickets"></div>
   </div>
 </div>
 
@@ -894,7 +936,7 @@ async function testConnection(config){
 const S={
   cart:[],isDayOpen:false,currentDay:null,
   menu:{},settings:{adminPin:'0000',storeName:'学園祭会計システム'},
-  ordersSnap:{},daysSnap:{},
+  ordersSnap:{},daysSnap:{},ticketsSnap:{},
   pinBuf:'',pinCb:null,editingMenuId:null,selCat:'all',
   kitchenFilter:'pending',activeAdminTab:'settings',activePosTab:'menu',
   currentRole:null, // 'cashier'|'kitchen'|'admin'
@@ -995,6 +1037,7 @@ function showScreen(name){
     document.getElementById('kitchen-screen').classList.add('show');
     updateKitchenOverlay();
     renderKitchen();
+    renderKitchenTickets();
   } else if(name==='pos'){
     document.getElementById('pos-screen').style.display='block';
     document.getElementById('pos-screen').classList.add('show');
@@ -1303,6 +1346,12 @@ function setupListeners(){
     S.daysSnap=snap.val()||{};
     if(S.currentRole==='admin'&&S.activeAdminTab==='sales') renderSalesContent();
   });
+
+  db.ref(`${ROOT}/tickets`).on('value',snap=>{
+    S.ticketsSnap=snap.val()||{};
+    if(S.currentRole==='kitchen') renderKitchenTickets();
+    if(S.currentRole==='admin'&&S.activeAdminTab==='tickets') renderAdminTickets();
+  });
 }
 
 function updateDayStatusBadges(){
@@ -1555,6 +1604,19 @@ function renderKitchen(){
   document.getElementById('kitchen-title').textContent=
     `未完了の注文${pendingCount>0?` (${pendingCount}件)`:''}`;
 
+  // Stats bar
+  const statsEl=document.getElementById('kitchen-stats');
+  if(statsEl){
+    const urgentCount=pending.filter(o=>{const m=Math.floor((Date.now()-new Date(o.timestamp).getTime())/60000);return m>=5&&m<10;}).length;
+    const critCount=pending.filter(o=>Math.floor((Date.now()-new Date(o.timestamp).getTime())/60000)>=10).length;
+    statsEl.innerHTML=`
+      <div class="k-stat">📋 待機 ${pendingCount}</div>
+      <div class="k-stat">✅ 完了 ${done.length}</div>
+      ${urgentCount>0?`<div class="k-stat urgent">🟡 遅延 ${urgentCount}</div>`:''}
+      ${critCount>0?`<div class="k-stat critical">🔴 超過 ${critCount}</div>`:''}
+    `;
+  }
+
   // 完了フィードを更新
   renderKitchenDoneFeed(done);
 
@@ -1698,6 +1760,131 @@ async function completeOrder(orderId){
 }
 
 // ============================================================
+//  KITCHEN: 整理券パネル表示
+// ============================================================
+function renderKitchenTickets(){
+  const panel=document.getElementById('kitchen-ticket-panel');
+  if(!panel) return;
+  const tickets=Object.values(S.ticketsSnap).sort((a,b)=>a.num-b.num);
+  const active=tickets.filter(t=>t.status!=='done');
+  if(active.length===0){
+    panel.innerHTML=`<div class="kt-empty">整理券はありません</div>`;
+    return;
+  }
+  panel.innerHTML=active.map(t=>{
+    const statusLabel=t.status==='called'?'呼び出し中':'待機中';
+    return `<div class="kt-item">
+      <div class="kt-num">No.${t.num}</div>
+      <div class="kt-status ${t.status}">${statusLabel}</div>
+      <div class="kt-badge ${t.status}">${t.status==='called'?'📢':'⏳'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  ADMIN: 整理券管理
+// ============================================================
+function renderAdminTickets(){
+  const el=document.getElementById('acontent-tickets');
+  if(!el) return;
+  const tickets=Object.values(S.ticketsSnap).sort((a,b)=>a.num-b.num);
+  const waiting=tickets.filter(t=>t.status==='waiting');
+  const called=tickets.filter(t=>t.status==='called');
+  const done=tickets.filter(t=>t.status==='done');
+  const maxNum=tickets.length>0?Math.max(...tickets.map(t=>t.num)):0;
+
+  let html=`<div class="card">
+    <div class="sec-hdr">
+      <h3>🎫 整理券管理</h3>
+      <button class="btn btn-primary" onclick="addTicket()">＋ 整理券を発行</button>
+    </div>
+    <p style="font-size:12px;color:var(--gray);margin:-4px 0 14px;">
+      発行 → 呼び出し → 完了の順で管理できます。調理画面サイドパネルにリアルタイム表示されます。
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+      <span style="font-size:13px;font-weight:700;color:#475569;">次の番号: <strong style="color:var(--primary);font-size:15px;">No.${maxNum+1}</strong></span>
+      <button class="btn btn-ghost" style="margin-left:auto;" onclick="resetTickets()">🗑️ 全リセット</button>
+    </div>`;
+
+  if(tickets.length===0){
+    html+=`<div class="empty-state"><div class="icon">🎫</div><p>整理券が発行されていません<br>「整理券を発行」ボタンで追加できます</p></div>`;
+  } else {
+    if(waiting.length>0){
+      html+=`<div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">待機中 (${waiting.length})</div>
+        <div class="srq-list">`;
+      waiting.forEach(t=>{
+        html+=`<div class="srq-chip waiting">
+          <span>🎫 No.${t.num}</span>
+          <button onclick="callTicket('${t.id}')" title="呼び出し">📢</button>
+          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
+        </div>`;
+      });
+      html+=`</div></div>`;
+    }
+    if(called.length>0){
+      html+=`<div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">呼び出し中 (${called.length})</div>
+        <div class="srq-list">`;
+      called.forEach(t=>{
+        html+=`<div class="srq-chip called">
+          <span>📢 No.${t.num}</span>
+          <button onclick="doneTicket('${t.id}')" title="完了">✅</button>
+          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
+        </div>`;
+      });
+      html+=`</div></div>`;
+    }
+    if(done.length>0){
+      html+=`<div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">完了済み (${done.length})</div>
+        <div class="srq-list">`;
+      done.forEach(t=>{
+        html+=`<div class="srq-chip done">
+          <span>✅ No.${t.num}</span>
+          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
+        </div>`;
+      });
+      html+=`</div></div>`;
+    }
+  }
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+async function addTicket(){
+  const existing=Object.values(S.ticketsSnap);
+  const maxNum=existing.length>0?Math.max(...existing.map(t=>t.num)):0;
+  const id=Date.now();
+  const ticket={id,num:maxNum+1,status:'waiting',createdAt:new Date().toISOString()};
+  await db.ref(`${ROOT}/tickets/${id}`).set(ticket);
+  showToast(`🎫 整理券 No.${ticket.num} を発行しました`,'success');
+}
+
+async function callTicket(id){
+  await db.ref(`${ROOT}/tickets/${id}/status`).set('called');
+  const t=S.ticketsSnap[id];
+  if(t) showToast(`📢 No.${t.num} を呼び出しました`,'success');
+}
+
+async function doneTicket(id){
+  await db.ref(`${ROOT}/tickets/${id}/status`).set('done');
+  const t=S.ticketsSnap[id];
+  if(t) showToast(`✅ No.${t.num} を完了しました`,'success');
+}
+
+async function deleteTicket(id){
+  await db.ref(`${ROOT}/tickets/${id}`).remove();
+  showToast('整理券を削除しました');
+}
+
+async function resetTickets(){
+  if(!confirm('全ての整理券をリセットしますか？\nNo.1から再発行できるようになります。'))return;
+  await db.ref(`${ROOT}/tickets`).remove();
+  showToast('整理券をリセットしました','success');
+}
+
+// ============================================================
 //  DAY MANAGEMENT
 // ============================================================
 function openDay(){
@@ -1790,6 +1977,7 @@ function switchAdminTab(tab){
 function renderAdminTab(tab){
   if(tab==='settings') renderSettingsContent();
   if(tab==='sales') renderSalesContent();
+  if(tab==='tickets') renderAdminTickets();
 }
 
 // ============================================================
