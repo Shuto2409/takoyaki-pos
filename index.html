@@ -262,10 +262,17 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .srq-list{display:flex;flex-wrap:wrap;gap:8px;padding:14px;}
 .srq-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;font-weight:800;font-size:15px;border:2px solid;}
 .srq-chip.waiting{background:#dbeafe;border-color:#93c5fd;color:#1e3a8a;}
+.srq-chip.available{background:#f0fdf4;border-color:#86efac;color:#15803d;}
+.srq-chip.in_use{background:#fff7ed;border-color:#fdba74;color:#c2410c;}
 .srq-chip.called{background:#dcfce7;border-color:#86efac;color:#14532d;}
 .srq-chip.done{background:#f1f5f9;border-color:#cbd5e1;color:#64748b;}
 .srq-chip button{background:none;border:none;cursor:pointer;font-size:13px;color:inherit;opacity:.6;padding:0;line-height:1;}
 .srq-chip button:hover{opacity:1;}
+/* 調理チケット上の整理券番号バッジ */
+.ticket-srq-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.45);border-radius:12px;padding:5px 14px;font-size:20px;font-weight:900;color:white;letter-spacing:-0.5px;margin-top:7px;}
+/* kt-status と kt-badge の in_use */
+.kt-status.in_use{color:#c2410c;}
+.kt-badge.in_use{background:#fff7ed;color:#c2410c;}
 
 /* ===================== ADMIN SCREEN ===================== */
 #admin-screen{display:none;}
@@ -790,6 +797,16 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
     <div class="form-group"><label>お預かり金額</label><input type="number" id="cash-input" placeholder="0" oninput="calcChange()" min="0"></div>
     <div class="quick-cash-btns" id="quick-cash-btns"></div>
     <div class="change-box" id="change-display"><div class="change-label">お釣り</div><div class="change-amount" id="change-amount">¥0</div></div>
+    <!-- 整理券割当 -->
+    <div id="ticket-assign-group" style="display:none;background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:13px;margin-top:12px;">
+      <div style="font-size:13px;font-weight:800;color:#166534;margin-bottom:9px;">🎫 整理券番号を割り当て（任意）</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px;" id="ticket-quick-btns"></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="ticket-num-input" placeholder="番号を入力" min="1" style="width:100px;padding:8px 10px;border:2px solid #86efac;border-radius:9px;font-size:20px;font-weight:900;text-align:center;outline:none;color:#166534;" oninput="highlightTicketBtn()">
+        <span style="font-size:12px;color:var(--gray);">手入力も可</span>
+        <button type="button" class="btn btn-ghost" style="margin-left:auto;padding:6px 10px;font-size:12px;" onclick="clearTicketNum()">✕ なし</button>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closePaymentModal()">キャンセル</button>
       <button class="btn btn-success" id="confirm-pay-btn" onclick="confirmPayment()" disabled>✓ 決済完了</button>
@@ -1517,10 +1534,49 @@ function showPaymentModal(){
   document.getElementById('cash-input').value='';
   document.getElementById('change-display').style.display='none';
   document.getElementById('confirm-pay-btn').disabled=true;
+  // 整理券クイックボタン
+  const availTickets=Object.values(S.ticketsSnap).filter(t=>t.status==='available').sort((a,b)=>a.num-b.num);
+  const tg=document.getElementById('ticket-assign-group');
+  const tqb=document.getElementById('ticket-quick-btns');
+  const tni=document.getElementById('ticket-num-input');
+  if(tg&&tqb&&tni){
+    tni.value='';
+    if(availTickets.length>0){
+      tg.style.display='block';
+      tqb.innerHTML=availTickets.slice(0,10).map(t=>
+        `<button type="button" class="qc-btn" id="tqb-${t.num}" style="background:#dcfce7;border-color:#86efac;color:#166534;font-weight:900;" onclick="selectTicketNum(${t.num})">No.${t.num}</button>`
+      ).join('');
+    } else {
+      tg.style.display='none';
+    }
+  }
   document.getElementById('payment-modal-overlay').classList.add('show');
   setTimeout(()=>document.getElementById('cash-input').focus(),100);
 }
-function closePaymentModal(){document.getElementById('payment-modal-overlay').classList.remove('show');}
+function closePaymentModal(){
+  document.getElementById('payment-modal-overlay').classList.remove('show');
+  const tni=document.getElementById('ticket-num-input');
+  if(tni) tni.value='';
+}
+function selectTicketNum(num){
+  const tni=document.getElementById('ticket-num-input');
+  if(tni) tni.value=num;
+  highlightTicketBtn();
+}
+function highlightTicketBtn(){
+  const val=document.getElementById('ticket-num-input')?.value;
+  document.querySelectorAll('[id^="tqb-"]').forEach(b=>{
+    const n=b.id.replace('tqb-','');
+    b.style.background= n===val ?'#16a34a':'#dcfce7';
+    b.style.color= n===val ?'white':'#166534';
+    b.style.borderColor= n===val ?'#16a34a':'#86efac';
+  });
+}
+function clearTicketNum(){
+  const tni=document.getElementById('ticket-num-input');
+  if(tni) tni.value='';
+  highlightTicketBtn();
+}
 
 function calcChange(){
   const total=S.cart.reduce((s,i)=>s+i.price*i.qty,0);
@@ -1537,6 +1593,9 @@ async function confirmPayment(){
   const total=S.cart.reduce((s,i)=>s+i.price*i.qty,0);
   const cash=parseInt(document.getElementById('cash-input').value)||0;
   const change=cash-total;
+  // 整理券番号取得
+  const ticketNumRaw=parseInt(document.getElementById('ticket-num-input')?.value);
+  const ticketNum=isNaN(ticketNumRaw)?null:ticketNumRaw;
   // order number within day
   const dayOrders=Object.values(S.ordersSnap).filter(o=>o.dayId===S.currentDay.id);
   const orderNum=dayOrders.length+1;
@@ -1545,10 +1604,16 @@ async function confirmPayment(){
     timestamp:new Date().toISOString(),
     items:S.cart.map(i=>({id:i.id,name:i.name,price:i.price,qty:i.qty})),
     total,payment:cash,change,status:'pending',
+    ticketNum:ticketNum,
   };
   showLoading(true);
   try{
     await db.ref(`${ROOT}/orders/${order.id}`).set(order);
+    // 整理券を「使用中」に更新
+    if(ticketNum!=null){
+      const tk=Object.values(S.ticketsSnap).find(t=>t.num===ticketNum);
+      if(tk) await db.ref(`${ROOT}/tickets/${tk.id}`).update({status:'in_use',orderId:order.id});
+    }
     for(const ci of S.cart){
       const mi=S.menu[ci.id];
       if(!mi) continue;
@@ -1647,6 +1712,7 @@ function renderKitchen(){
       <div class="${headerClass}">
         <div>
           <div class="ticket-num"># ${order.orderNum||'?'}</div>
+          ${order.ticketNum!=null?`<div class="ticket-srq-badge">🎫 整理券 No.${order.ticketNum}</div>`:''}
           ${!isDone?`<div class="ticket-elapsed">${isCritical?'🔴':isUrgent?'🟡':'🟢'} <span class="elapsed-display" data-ts="${new Date(order.timestamp).getTime()}">${elapsedStr}</span></div>`:''}
         </div>
         <div class="ticket-time">${time}</div>
@@ -1754,8 +1820,14 @@ function startElapsedTimer(){
 }
 
 async function completeOrder(orderId){
+  const order=S.ordersSnap[orderId];
   await db.ref(`${ROOT}/orders/${orderId}/status`).set('completed');
   await db.ref(`${ROOT}/orders/${orderId}/completedAt`).set(new Date().toISOString());
+  // 整理券がある場合は「呼び出し中」に自動変更（お客様に知らせる）
+  if(order?.ticketNum!=null){
+    const tk=Object.values(S.ticketsSnap).find(t=>t.num===order.ticketNum);
+    if(tk) await db.ref(`${ROOT}/tickets/${tk.id}/status`).set('called');
+  }
   showToast('注文を完了しました ✅','success');
 }
 
@@ -1765,18 +1837,24 @@ async function completeOrder(orderId){
 function renderKitchenTickets(){
   const panel=document.getElementById('kitchen-ticket-panel');
   if(!panel) return;
-  const tickets=Object.values(S.ticketsSnap).sort((a,b)=>a.num-b.num);
-  const active=tickets.filter(t=>t.status!=='done');
-  if(active.length===0){
-    panel.innerHTML=`<div class="kt-empty">整理券はありません</div>`;
+  const tickets=Object.values(S.ticketsSnap)
+    .filter(t=>t.status==='in_use'||t.status==='called')
+    .sort((a,b)=>a.num-b.num);
+  if(tickets.length===0){
+    panel.innerHTML=`<div class="kt-empty">使用中の整理券はありません</div>`;
     return;
   }
-  panel.innerHTML=active.map(t=>{
-    const statusLabel=t.status==='called'?'呼び出し中':'待機中';
+  panel.innerHTML=tickets.map(t=>{
+    const order=t.orderId?S.ordersSnap[t.orderId]:null;
+    const orderLabel=order?`注文 #${order.orderNum}`:'' ;
+    const statusLabel=t.status==='called'?'📢 呼び出し中':'🍳 調理中';
     return `<div class="kt-item">
       <div class="kt-num">No.${t.num}</div>
-      <div class="kt-status ${t.status}">${statusLabel}</div>
-      <div class="kt-badge ${t.status}">${t.status==='called'?'📢':'⏳'}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="kt-status ${t.status}">${statusLabel}</div>
+        ${orderLabel?`<div style="font-size:11px;color:var(--gray);margin-top:2px;">${orderLabel}</div>`:''}
+      </div>
+      <div class="kt-badge ${t.status}">${t.status==='called'?'📢':'🍳'}</div>
     </div>`;
   }).join('');
 }
@@ -1788,60 +1866,99 @@ function renderAdminTickets(){
   const el=document.getElementById('acontent-tickets');
   if(!el) return;
   const tickets=Object.values(S.ticketsSnap).sort((a,b)=>a.num-b.num);
-  const waiting=tickets.filter(t=>t.status==='waiting');
+  const available=tickets.filter(t=>t.status==='available');
+  const inUse=tickets.filter(t=>t.status==='in_use');
   const called=tickets.filter(t=>t.status==='called');
   const done=tickets.filter(t=>t.status==='done');
   const maxNum=tickets.length>0?Math.max(...tickets.map(t=>t.num)):0;
 
   let html=`<div class="card">
-    <div class="sec-hdr">
-      <h3>🎫 整理券管理</h3>
-      <button class="btn btn-primary" onclick="addTicket()">＋ 整理券を発行</button>
+    <div class="sec-hdr"><h3>🎫 整理券管理</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="addTicket()">＋ 1枚発行</button>
+        <button class="btn btn-ghost" onclick="showBulkAddTickets()">📋 まとめて発行</button>
+      </div>
     </div>
-    <p style="font-size:12px;color:var(--gray);margin:-4px 0 14px;">
-      発行 → 呼び出し → 完了の順で管理できます。調理画面サイドパネルにリアルタイム表示されます。
+    <p style="font-size:12px;color:var(--gray);margin:-4px 0 12px;">
+      空き → <b>会計で割当</b> → 使用中 → <b>調理完了で自動</b> → 呼び出し中 → <b>お客様受取</b> → 完了
     </p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
-      <span style="font-size:13px;font-weight:700;color:#475569;">次の番号: <strong style="color:var(--primary);font-size:15px;">No.${maxNum+1}</strong></span>
-      <button class="btn btn-ghost" style="margin-left:auto;" onclick="resetTickets()">🗑️ 全リセット</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#f8fafc;border-radius:10px;margin-bottom:14px;">
+      <span style="font-size:13px;font-weight:700;color:#475569;">次の番号:</span>
+      <strong style="color:var(--primary);font-size:16px;">No.${maxNum+1}</strong>
+      <span style="margin-left:6px;font-size:12px;color:var(--gray);">空き: ${available.length} / 使用中: ${inUse.length} / 呼出: ${called.length}</span>
+      <button class="btn btn-ghost" style="margin-left:auto;font-size:12px;" onclick="resetTickets()">🗑️ 全リセット</button>
+    </div>
+    <!-- まとめて発行エリア（初期非表示） -->
+    <div id="bulk-add-area" style="display:none;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:9px;">📋 まとめて発行</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:13px;font-weight:700;">No.</span>
+          <input type="number" id="bulk-from" min="1" value="${maxNum+1}" style="width:72px;padding:6px 8px;border:1.5px solid #bae6fd;border-radius:7px;font-size:14px;text-align:center;outline:none;">
+          <span style="font-size:13px;font-weight:700;">〜 No.</span>
+          <input type="number" id="bulk-to" min="1" value="${maxNum+10}" style="width:72px;padding:6px 8px;border:1.5px solid #bae6fd;border-radius:7px;font-size:14px;text-align:center;outline:none;">
+        </div>
+        <button class="btn btn-primary" style="background:#0369a1;" onclick="bulkAddTickets()">まとめて発行</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('bulk-add-area').style.display='none'">閉じる</button>
+      </div>
     </div>`;
 
   if(tickets.length===0){
-    html+=`<div class="empty-state"><div class="icon">🎫</div><p>整理券が発行されていません<br>「整理券を発行」ボタンで追加できます</p></div>`;
+    html+=`<div class="empty-state"><div class="icon">🎫</div><p>整理券がありません<br>「＋ 1枚発行」か「まとめて発行」で追加できます</p></div>`;
   } else {
-    if(waiting.length>0){
+    // 空き
+    if(available.length>0){
       html+=`<div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">待機中 (${waiting.length})</div>
+        <div style="font-size:11px;font-weight:800;color:#15803d;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">✅ 空き (${available.length})</div>
         <div class="srq-list">`;
-      waiting.forEach(t=>{
-        html+=`<div class="srq-chip waiting">
+      available.forEach(t=>{
+        html+=`<div class="srq-chip available">
           <span>🎫 No.${t.num}</span>
-          <button onclick="callTicket('${t.id}')" title="呼び出し">📢</button>
           <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
         </div>`;
       });
       html+=`</div></div>`;
     }
+    // 使用中
+    if(inUse.length>0){
+      html+=`<div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:800;color:#c2410c;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">🍳 使用中 (${inUse.length})</div>
+        <div class="srq-list">`;
+      inUse.forEach(t=>{
+        const order=t.orderId?S.ordersSnap[t.orderId]:null;
+        const orderStr=order?` (注文 #${order.orderNum})`:'';
+        html+=`<div class="srq-chip in_use">
+          <span>🎫 No.${t.num}${esc(orderStr)}</span>
+          <button onclick="callTicket('${t.id}')" title="呼び出し">📢</button>
+          <button onclick="freeTicket('${t.id}')" title="空きに戻す">↩</button>
+          <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
+        </div>`;
+      });
+      html+=`</div></div>`;
+    }
+    // 呼び出し中
     if(called.length>0){
       html+=`<div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">呼び出し中 (${called.length})</div>
+        <div style="font-size:11px;font-weight:800;color:#14532d;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">📢 呼び出し中 (${called.length})</div>
         <div class="srq-list">`;
       called.forEach(t=>{
         html+=`<div class="srq-chip called">
           <span>📢 No.${t.num}</span>
-          <button onclick="doneTicket('${t.id}')" title="完了">✅</button>
+          <button onclick="doneTicket('${t.id}')" title="受取完了">✅</button>
           <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
         </div>`;
       });
       html+=`</div></div>`;
     }
+    // 完了済み
     if(done.length>0){
       html+=`<div style="margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">完了済み (${done.length})</div>
+        <div style="font-size:11px;font-weight:800;color:#64748b;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">🏁 完了済み (${done.length})</div>
         <div class="srq-list">`;
       done.forEach(t=>{
         html+=`<div class="srq-chip done">
           <span>✅ No.${t.num}</span>
+          <button onclick="freeTicket('${t.id}')" title="空きに戻す">↩</button>
           <button onclick="deleteTicket('${t.id}')" title="削除">✕</button>
         </div>`;
       });
@@ -1856,9 +1973,35 @@ async function addTicket(){
   const existing=Object.values(S.ticketsSnap);
   const maxNum=existing.length>0?Math.max(...existing.map(t=>t.num)):0;
   const id=Date.now();
-  const ticket={id,num:maxNum+1,status:'waiting',createdAt:new Date().toISOString()};
+  const ticket={id,num:maxNum+1,status:'available',createdAt:new Date().toISOString()};
   await db.ref(`${ROOT}/tickets/${id}`).set(ticket);
   showToast(`🎫 整理券 No.${ticket.num} を発行しました`,'success');
+}
+
+function showBulkAddTickets(){
+  const area=document.getElementById('bulk-add-area');
+  if(area) area.style.display=area.style.display==='none'?'block':'none';
+}
+
+async function bulkAddTickets(){
+  const from=parseInt(document.getElementById('bulk-from')?.value);
+  const to=parseInt(document.getElementById('bulk-to')?.value);
+  if(isNaN(from)||isNaN(to)||from>to){showToast('範囲を正しく入力してください','error');return;}
+  if(to-from>99){showToast('一度に100枚以上は発行できません','error');return;}
+  const existing=Object.values(S.ticketsSnap).map(t=>t.num);
+  const toAdd=[];
+  for(let n=from;n<=to;n++){if(!existing.includes(n))toAdd.push(n);}
+  if(toAdd.length===0){showToast('その範囲は既に発行済みです','warning');return;}
+  showLoading(true);
+  const updates={};
+  toAdd.forEach((n,i)=>{
+    const id=Date.now()+i;
+    updates[`${ROOT}/tickets/${id}`]={id,num:n,status:'available',createdAt:new Date().toISOString()};
+  });
+  await db.ref('/').update(updates);
+  showLoading(false);
+  showToast(`🎫 整理券 No.${from}〜${to} を発行しました（${toAdd.length}枚）`,'success');
+  document.getElementById('bulk-add-area').style.display='none';
 }
 
 async function callTicket(id){
@@ -1868,9 +2011,15 @@ async function callTicket(id){
 }
 
 async function doneTicket(id){
-  await db.ref(`${ROOT}/tickets/${id}/status`).set('done');
+  await db.ref(`${ROOT}/tickets/${id}`).update({status:'done',orderId:null});
   const t=S.ticketsSnap[id];
-  if(t) showToast(`✅ No.${t.num} を完了しました`,'success');
+  if(t) showToast(`✅ No.${t.num} 受取完了`,'success');
+}
+
+async function freeTicket(id){
+  await db.ref(`${ROOT}/tickets/${id}`).update({status:'available',orderId:null});
+  const t=S.ticketsSnap[id];
+  if(t) showToast(`↩ No.${t.num} を空きに戻しました`);
 }
 
 async function deleteTicket(id){
@@ -1879,7 +2028,7 @@ async function deleteTicket(id){
 }
 
 async function resetTickets(){
-  if(!confirm('全ての整理券をリセットしますか？\nNo.1から再発行できるようになります。'))return;
+  if(!confirm('全ての整理券をリセットしますか？\n使用中・完了済みを含む全データが削除されます。'))return;
   await db.ref(`${ROOT}/tickets`).remove();
   showToast('整理券をリセットしました','success');
 }
