@@ -1463,7 +1463,7 @@ function renderMenu(){
     btn.className='menu-btn'+(item.isSet?' is-set':'')+(isOut?' out-of-stock':isLow?' low-stock':'');
     btn.disabled=isOut;
     btn.onclick=()=>addToCart(item);
-    btn.innerHTML=`<div class="mname">${esc(item.name)}${item.isSet?'<span class="set-badge">SET</span>':''}</div><div class="mprice">¥${item.price.toLocaleString()}</div>${stockLabel?`<div class="mstock">${stockLabel}</div>`:''}`;
+    btn.innerHTML=`<div class="mname">${esc(item.name)}</div><div class="mprice">¥${item.price.toLocaleString()}</div>${stockLabel?`<div class="mstock">${stockLabel}</div>`:''}`;
     grid.appendChild(btn);
   });
 }
