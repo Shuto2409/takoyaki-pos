@@ -889,10 +889,6 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
     <div style="margin-bottom:14px;">
       <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:8px;">登録種別</div>
       <div style="display:flex;flex-direction:column;gap:7px;">
-        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;border-radius:10px;border:2px solid var(--border);background:#fff;" id="mode-normal-label">
-          <input type="radio" name="e-item-mode" value="normal" onchange="updateMenuMode()" checked style="accent-color:var(--primary);width:16px;height:16px;">
-          <div><div style="font-weight:700;font-size:13px;">🛒 通常商品</div><div style="font-size:11px;color:var(--gray);">レジに表示される通常の商品</div></div>
-        </label>
         <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;border-radius:10px;border:2px solid var(--border);background:#fff;" id="mode-set-label">
           <input type="radio" name="e-item-mode" value="set" onchange="updateMenuMode()" style="accent-color:var(--primary);width:16px;height:16px;">
           <div><div style="font-weight:700;font-size:13px;">📦 セット商品</div><div style="font-size:11px;color:var(--gray);">構成品の在庫が自動で連動</div></div>
@@ -2261,11 +2257,11 @@ function renderSalesContent(){
   }
 
   if(todayOrders.length>0){
-    html+=`<div class="card"><h3>🧾 本日の取引履歴</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>時刻</th><th>商品</th><th>金額</th></tr></thead><tbody>`;
+    html+=`<div class="card"><h3>🧾 本日の取引履歴</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>時刻</th><th>商品</th><th>金額</th><th></th></tr></thead><tbody>`;
     [...todayOrders].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).forEach(o=>{
       const time=new Date(o.timestamp).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
       const status=o.status==='completed'?'<span style="color:var(--success);font-size:11px;">✅完了</span>':'<span style="color:var(--warning);font-size:11px;">⏳未完了</span>';
-      html+=`<tr><td>#${o.orderNum||'-'} ${status}</td><td>${time}</td><td style="font-size:12px;">${esc((o.items||[]).map(i=>`${i.name}×${i.qty}`).join('、'))}</td><td style="font-weight:700;">¥${o.total.toLocaleString()}</td></tr>`;
+      const isCancellable=o.status!=='cancelled';html+=`<tr style="${o.status==='cancelled'?'opacity:.45;':''}"><td>#${o.orderNum||'-'} ${status}</td><td>${time}</td><td style="font-size:12px;">${esc((o.items||[]).map(i=>`${i.name}×${i.qty}`).join('、'))}</td><td style="font-weight:700;">¥${o.total.toLocaleString()}</td><td>${isCancellable?`<button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="cancelOrder(${JSON.stringify(o.id)})">🗑️ 取消</button>`:''}</td></tr>`;
     });
     html+=`</tbody></table></div></div>`;
   }
@@ -2318,8 +2314,8 @@ function showMenuAddModal(){
   ['e-name','e-price','e-cat'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('e-stock').value='0';
   document.getElementById('e-components-list').innerHTML='';
-  const radio=document.querySelector('input[name="e-item-mode"][value="normal"]');
-  if(radio){radio.checked=true;updateMenuMode();}
+  document.querySelectorAll('input[name="e-item-mode"]').forEach(r=>r.checked=false);
+  updateMenuMode();
   document.getElementById('menu-edit-modal-overlay').classList.add('show');
 }
 function showMenuEditModal(id){
@@ -2332,8 +2328,10 @@ function showMenuEditModal(id){
   document.getElementById('e-stock').value=item.stock||0;
   document.getElementById('e-components-list').innerHTML='';
   const mode=item.isSet?'set':item.isMaterial?'material':'normal';
+  document.querySelectorAll('input[name="e-item-mode"]').forEach(r=>r.checked=false);
   const radio=document.querySelector(`input[name="e-item-mode"][value="${mode}"]`);
-  if(radio){radio.checked=true;updateMenuMode();}
+  if(radio) radio.checked=true;
+  updateMenuMode();
   if(item.isSet&&item.components){
     item.components.forEach(comp=>{
       if(comp.isChoice){
@@ -2511,6 +2509,64 @@ async function deleteItem(id){
   if(!confirm('この商品を削除しますか？'))return;
   await db.ref(`${ROOT}/menu/${id}`).remove();
   showToast('商品を削除しました');
+}
+
+// ============================================================
+//  ORDER CANCELLATION
+// ============================================================
+async function cancelOrder(orderId){
+  const order=S.ordersSnap[orderId];
+  if(!order){showToast('注文が見つかりません','error');return;}
+  const itemsText=(order.items||[]).map(i=>`${i.name}×${i.qty}`).join('、');
+  if(!confirm(`注文 #${order.orderNum||'?'} を取り消しますか？\n\n${itemsText}\n\n在庫と整理券は自動で戻されます。`)) return;
+  showLoading(true);
+  try{
+    // 在庫を戻す
+    for(const ci of (order.items||[])){
+      const mi=S.menu[ci.id]||S.menu[String(ci.id)];
+      if(!mi) continue;
+      if(mi.isSet&&mi.components){
+        for(const comp of mi.components){
+          if(comp.isChoice){
+            if(ci.choices){
+              for(const choice of ci.choices){
+                const choiceItem=S.menu[choice.id]||S.menu[String(choice.id)];
+                if(choiceItem&&choiceItem.stock>0){
+                  await db.ref(`${ROOT}/menu/${choice.id}/currentStock`).transaction(cur=>{
+                    if(cur===null)return cur;
+                    return cur+(comp.qty||1)*ci.qty;
+                  });
+                }
+              }
+            }
+          }else{
+            const compItem=S.menu[comp.id]||S.menu[String(comp.id)];
+            if(compItem&&compItem.stock>0){
+              await db.ref(`${ROOT}/menu/${comp.id}/currentStock`).transaction(cur=>{
+                if(cur===null)return cur;
+                return cur+(comp.qty||1)*ci.qty;
+              });
+            }
+          }
+        }
+      }else if(mi.stock>0){
+        await db.ref(`${ROOT}/menu/${ci.id}/currentStock`).transaction(cur=>{
+          if(cur===null)return cur;
+          return cur+ci.qty;
+        });
+      }
+    }
+    // 整理券を空きに戻す
+    if(order.ticketNum!=null){
+      const tk=Object.values(S.ticketsSnap).find(t=>t.num===order.ticketNum);
+      if(tk) await db.ref(`${ROOT}/tickets/${tk.id}`).update({status:'available',orderId:null});
+    }
+    // 注文を削除
+    await db.ref(`${ROOT}/orders/${orderId}`).remove();
+    showToast(`注文 #${order.orderNum||'?'} を取り消しました ✅`,'success');
+    renderSalesContent();
+  }catch(e){console.error(e);showToast('エラーが発生しました','error');}
+  showLoading(false);
 }
 
 // ============================================================
