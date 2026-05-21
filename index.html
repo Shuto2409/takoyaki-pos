@@ -1582,14 +1582,16 @@ function addToCartWithChoices(item,choices){
   renderCart();
 }
 function removeFromCart(id,choiceKey=''){
-  const i=S.cart.findIndex(c=>c.id===id&&(c._choiceKey||'')===(choiceKey||''));
+  const sid=String(id);
+  const i=S.cart.findIndex(c=>String(c.id)===sid&&(c._choiceKey||'')===(choiceKey||''));
   if(i===-1) return;
   if(S.cart[i].qty>1)S.cart[i].qty--;else S.cart.splice(i,1);
   renderCart();
 }
 function addCartQty(id,choiceKey=''){
-  const ci=S.cart.find(c=>c.id===id&&(c._choiceKey||'')===(choiceKey||''));
-  const mi=S.menu[id];
+  const sid=String(id);
+  const ci=S.cart.find(c=>String(c.id)===sid&&(c._choiceKey||'')===(choiceKey||''));
+  const mi=S.menu[id]||S.menu[sid];
   if(ci&&mi&&mi.stock>0&&ci.qty>=(mi.currentStock!=null?mi.currentStock:mi.stock)){showToast('在庫が足りません','error');return;}
   if(ci)ci.qty++;
   renderCart();
@@ -1620,8 +1622,10 @@ function renderCart(){
       :'';
     const d=document.createElement('div');
     d.className='cart-item';
-    d.innerHTML=`<div class="ci-info"><div class="ci-name">${esc(item.name)}</div>${choiceTag?`<div style="margin-top:3px;">${choiceTag}</div>`:''}<div class="ci-price">¥${item.price.toLocaleString()} × ${item.qty} = ¥${(item.price*item.qty).toLocaleString()}</div></div>
-    <div class="qty-controls"><button class="qty-btn qty-minus" onclick="removeFromCart(${JSON.stringify(item.id)},'${ck}')">−</button><span class="qty-num">${item.qty}</span><button class="qty-btn qty-plus" onclick="addCartQty(${JSON.stringify(item.id)},'${ck}')">＋</button></div>`;
+    const price=Number(item.price)||0;
+    d.innerHTML=`<div class="ci-info"><div class="ci-name">${esc(item.name)}</div>${choiceTag?`<div style="margin-top:3px;">${choiceTag}</div>`:''}<div class="ci-price">¥${price.toLocaleString()} × ${item.qty} = ¥${(price*item.qty).toLocaleString()}</div></div><div class="qty-controls"><button class="qty-btn qty-minus">−</button><span class="qty-num">${item.qty}</span><button class="qty-btn qty-plus">＋</button></div>`;
+    d.querySelector('.qty-minus').addEventListener('click',()=>removeFromCart(item.id,ck));
+    d.querySelector('.qty-plus').addEventListener('click',()=>addCartQty(item.id,ck));
     el.appendChild(d);
   });
 }
