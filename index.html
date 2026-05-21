@@ -1462,20 +1462,15 @@ function filterCat(cat){
 // ============================================================
 function renderMenu(){
   const all=Object.values(S.menu).filter(i=>i.active!==false&&!i.isMaterial);
-  const items=S.selCat==='all'?all:all.filter(i=>(i.category||'')=== S.selCat);
   const grid=document.getElementById('menu-grid');
   if(!grid) return;
-  if(items.length===0){
-    grid.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>メニューがありません<br>管理画面から追加してください</p></div>`;
-    return;
-  }
-  grid.innerHTML='';
-  items.forEach(item=>{
+
+  const mkBtn=(item)=>{
     let isOut=false,isLow=false,stockLabel='';
     if(item.isSet){
       const avail=getSetAvailability(item);
       if(avail!==null){isOut=avail<=0;isLow=avail>0&&avail<=3;stockLabel=isOut?'在庫切れ':`残り ${avail} セット`;}
-    } else {
+    }else{
       const hasStock=item.stock>0;
       const cur=hasStock?(item.currentStock!=null?item.currentStock:item.stock):null;
       if(hasStock){isOut=cur<=0;isLow=cur>0&&cur<=5;stockLabel=isOut?'在庫切れ':`残り ${cur} 個`;}
@@ -1485,8 +1480,48 @@ function renderMenu(){
     btn.disabled=isOut;
     btn.onclick=()=>addToCart(item);
     btn.innerHTML=`<div class="mname">${esc(item.name)}</div><div class="mprice">¥${item.price.toLocaleString()}</div>${stockLabel?`<div class="mstock">${stockLabel}</div>`:''}`;
-    grid.appendChild(btn);
-  });
+    return btn;
+  };
+
+  grid.innerHTML='';
+
+  if(S.selCat==='all'){
+    // カテゴリごとにグループ化して表示
+    const grouped=new Map();
+    all.forEach(item=>{
+      const cat=item.category||'その他';
+      if(!grouped.has(cat)) grouped.set(cat,[]);
+      grouped.get(cat).push(item);
+    });
+    // カテゴリあり→アルファベット順、「その他」を末尾に
+    const keys=[...grouped.keys()].filter(k=>k!=='その他').sort();
+    if(grouped.has('その他')) keys.push('その他');
+    if(keys.length===0){
+      grid.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>メニューがありません<br>管理画面から追加してください</p></div>`;
+      return;
+    }
+    const showHdr=keys.length>1||(keys.length===1&&keys[0]!=='その他');
+    keys.forEach(cat=>{
+      if(showHdr){
+        const hdr=document.createElement('div');
+        hdr.className='cat-section-hdr';
+        hdr.textContent=cat;
+        grid.appendChild(hdr);
+      }
+      const row=document.createElement('div');
+      row.className='menu-grid-inner';
+      grouped.get(cat).forEach(item=>row.appendChild(mkBtn(item)));
+      grid.appendChild(row);
+    });
+  }else{
+    // 特定カテゴリのみフラット表示
+    const items=all.filter(i=>(i.category||'')=== S.selCat);
+    if(items.length===0){
+      grid.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>このカテゴリの商品はありません</p></div>`;
+      return;
+    }
+    items.forEach(item=>grid.appendChild(mkBtn(item)));
+  }
 }
 
 // ============================================================
