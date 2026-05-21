@@ -405,6 +405,28 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .empty-state .icon{font-size:42px;margin-bottom:10px;}
 .empty-state p{font-size:14px;line-height:1.7;font-weight:600;}
 
+/* ===== カテゴリセクション（会計画面） ===== */
+.cat-section-hdr{font-size:13px;font-weight:800;color:#475569;padding:6px 4px 8px;border-bottom:2px solid var(--border);margin:14px 0 10px;letter-spacing:.4px;display:flex;align-items:center;gap:6px;}
+.cat-section-hdr:first-child{margin-top:0;}
+.menu-grid-inner{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:4px;}
+@media(max-width:480px){.menu-grid-inner{grid-template-columns:repeat(2,1fr);}}
+
+/* ===== 選択式ドリンクモーダル ===== */
+.choice-section{margin-bottom:18px;}
+.choice-section-title{font-size:14px;font-weight:800;color:#374151;margin-bottom:10px;}
+.choice-opt{display:flex;align-items:center;gap:12px;padding:11px 13px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .15s;margin-bottom:8px;background:white;}
+.choice-opt:hover:not(.out){border-color:var(--primary);background:#f0f9ff;}
+.choice-opt.selected{border-color:var(--primary);background:#eff6ff;}
+.choice-opt.out{opacity:.38;cursor:not-allowed;background:#f8fafc;}
+.choice-opt input[type=radio]{accent-color:var(--primary);width:18px;height:18px;flex-shrink:0;}
+.choice-opt-name{font-size:14px;font-weight:700;flex:1;}
+.choice-opt-stock{font-size:11px;color:var(--gray);font-weight:600;}
+/* カートの選択タグ */
+.cart-choice-tag{font-size:11px;color:var(--primary);background:#eff6ff;border-radius:6px;padding:2px 7px;margin-top:3px;display:inline-block;font-weight:700;}
+/* 構成品・選択式行 */
+.comp-mode-btn{padding:4px 10px;font-size:11px;font-weight:700;border:1.5px solid var(--border);border-radius:6px;background:white;cursor:pointer;transition:all .15s;color:var(--gray);}
+.comp-mode-btn.active{background:var(--primary);border-color:var(--primary);color:white;}
+
 /* ===== TOAST ===== */
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:#0f172a;color:white;padding:13px 26px;border-radius:16px;font-size:14px;font-weight:700;z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);max-width:320px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);}
 #toast.show{transform:translateX(-50%) translateY(0);}
@@ -668,7 +690,7 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
   <div class="cashier-body">
     <div id="cashier-pos">
       <div>
-        <div class="cat-filter" id="cat-filter"></div>
+        <div class="cat-filter" id="cat-filter" style="display:none"></div>
         <div id="menu-grid"></div>
       </div>
       <div id="cart-panel">
@@ -906,6 +928,18 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeMenuEditModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="saveMenuItem()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHOICE MODAL ===== -->
+<div class="modal-overlay" id="choice-modal-overlay">
+  <div class="modal">
+    <h2 id="choice-modal-title">🔸 オプションを選択</h2>
+    <div id="choice-modal-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeChoiceModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="confirmChoice()">✓ カートに追加</button>
     </div>
   </div>
 </div>
@@ -1431,40 +1465,56 @@ function filterCat(cat){
 //  MENU (Cashier)
 // ============================================================
 function renderMenu(){
-  // 食材（isMaterial）はレジに表示しない
   const items=Object.values(S.menu).filter(i=>i.active!==false&&!i.isMaterial);
-  const filtered=S.selCat==='all'?items:items.filter(i=>i.category===S.selCat);
   const grid=document.getElementById('menu-grid');
   if(!grid) return;
-  if(filtered.length===0){
-    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">📋</div><p>メニューがありません<br>管理画面から追加してください</p></div>`;
+  if(items.length===0){
+    grid.innerHTML=`<div class="empty-state"><div class="icon">📋</div><p>メニューがありません<br>管理画面から追加してください</p></div>`;
     return;
   }
-  grid.innerHTML='';
-  filtered.forEach(item=>{
+
+  // カテゴリごとにグループ化
+  const grouped=new Map();
+  items.forEach(item=>{
+    const cat=item.category||'';
+    if(!grouped.has(cat)) grouped.set(cat,[]);
+    grouped.get(cat).push(item);
+  });
+  // カテゴリあり優先、空カテゴリを末尾に
+  const sortedKeys=[...grouped.keys()].filter(k=>k!=='').sort();
+  if(grouped.has('')) sortedKeys.push('');
+  const hasCats=sortedKeys.some(k=>k!=='');
+
+  const mkBtn=(item)=>{
     let isOut=false,isLow=false,stockLabel='';
     if(item.isSet){
       const avail=getSetAvailability(item);
-      if(avail!==null){
-        isOut=avail<=0;
-        isLow=avail>0&&avail<=3;
-        stockLabel=isOut?'在庫切れ':`セット残り ${avail} 個`;
-      }
+      if(avail!==null){isOut=avail<=0;isLow=avail>0&&avail<=3;stockLabel=isOut?'在庫切れ':`残り ${avail} セット`;}
     } else {
       const hasStock=item.stock>0;
       const cur=hasStock?(item.currentStock!=null?item.currentStock:item.stock):null;
-      if(hasStock){
-        isOut=cur<=0;
-        isLow=cur>0&&cur<=5;
-        stockLabel=isOut?'在庫切れ':`残り ${cur} 個`;
-      }
+      if(hasStock){isOut=cur<=0;isLow=cur>0&&cur<=5;stockLabel=isOut?'在庫切れ':`残り ${cur} 個`;}
     }
     const btn=document.createElement('button');
     btn.className='menu-btn'+(item.isSet?' is-set':'')+(isOut?' out-of-stock':isLow?' low-stock':'');
     btn.disabled=isOut;
     btn.onclick=()=>addToCart(item);
     btn.innerHTML=`<div class="mname">${esc(item.name)}</div><div class="mprice">¥${item.price.toLocaleString()}</div>${stockLabel?`<div class="mstock">${stockLabel}</div>`:''}`;
-    grid.appendChild(btn);
+    return btn;
+  };
+
+  grid.innerHTML='';
+  sortedKeys.forEach(cat=>{
+    if(hasCats){
+      const hdr=document.createElement('div');
+      hdr.className='cat-section-hdr';
+      hdr.textContent=cat||'その他';
+      grid.appendChild(hdr);
+    }
+    const inner=document.createElement('div');
+    inner.className='menu-grid-inner';
+    grouped.get(cat).forEach(item=>inner.appendChild(mkBtn(item)));
+    grid.appendChild(inner);
   });
 }
 
@@ -1472,7 +1522,11 @@ function renderMenu(){
 //  CART
 // ============================================================
 function addToCart(item){
-  const ex=S.cart.find(c=>c.id===item.id);
+  // 選択式コンポーネントがあれば選択モーダルを先に表示
+  if(item.isSet&&item.components&&item.components.some(c=>c.isChoice)){
+    showChoiceModal(item); return;
+  }
+  const ex=S.cart.find(c=>c.id===item.id&&!c._choiceKey);
   if(ex){
     if(item.isSet){
       const avail=getSetAvailability(item);
@@ -1484,14 +1538,24 @@ function addToCart(item){
   }else{S.cart.push({...item,qty:1});}
   renderCart();
 }
-function removeFromCart(id){
-  const i=S.cart.findIndex(c=>c.id===id);
+function addToCartWithChoices(item,choices){
+  const choiceKey=choices.map(c=>c.id).join('|');
+  const ex=S.cart.find(c=>c.id===item.id&&c._choiceKey===choiceKey);
+  if(ex){
+    const avail=getSetAvailability(item);
+    if(avail!==null&&ex.qty>=avail){showToast('在庫が足りません','error');return;}
+    ex.qty++;
+  }else{S.cart.push({...item,qty:1,choices,_choiceKey:choiceKey});}
+  renderCart();
+}
+function removeFromCart(id,choiceKey=''){
+  const i=S.cart.findIndex(c=>c.id===id&&(c._choiceKey||'')===(choiceKey||''));
   if(i===-1) return;
   if(S.cart[i].qty>1)S.cart[i].qty--;else S.cart.splice(i,1);
   renderCart();
 }
-function addCartQty(id){
-  const ci=S.cart.find(c=>c.id===id);
+function addCartQty(id,choiceKey=''){
+  const ci=S.cart.find(c=>c.id===id&&(c._choiceKey||'')===(choiceKey||''));
   const mi=S.menu[id];
   if(ci&&mi&&mi.stock>0&&ci.qty>=(mi.currentStock!=null?mi.currentStock:mi.stock)){showToast('在庫が足りません','error');return;}
   if(ci)ci.qty++;
