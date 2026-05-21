@@ -1601,7 +1601,7 @@ function clearCart(){if(!S.cart.length)return;S.cart=[];renderCart();}
 function renderCart(){
   const el=document.getElementById('cart-items');
   if(!el) return;
-  const total=S.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const total=S.cart.reduce((s,i)=>s+(Number(i.price)||0)*i.qty,0);
   const count=S.cart.reduce((s,i)=>s+i.qty,0);
   document.getElementById('cart-count').textContent=`${count} 点`;
   document.getElementById('total-display').textContent=`¥${total.toLocaleString()}`;
@@ -1635,7 +1635,7 @@ function renderCart(){
 // ============================================================
 function showPaymentModal(){
   if(!S.cart.length) return;
-  const total=S.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const total=S.cart.reduce((s,i)=>s+(Number(i.price)||0)*i.qty,0);
   document.getElementById('pay-items').innerHTML=S.cart.map(i=>{
     const ch=i.choices&&i.choices.length>0?' ('+i.choices.map(c=>`${esc(c.label||c.compLabel||'')}: ${esc(c.name||'')}`).join(', ')+')':'';
     return `<div class="pay-item-row"><span>${esc(i.name)}${ch} × ${i.qty}</span><span style="font-weight:700;">¥${(i.price*i.qty).toLocaleString()}</span></div>`;
@@ -1723,7 +1723,7 @@ function clearTicketNum(){
 }
 
 function calcChange(){
-  const total=S.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const total=S.cart.reduce((s,i)=>s+(Number(i.price)||0)*i.qty,0);
   const cash=parseInt(document.getElementById('cash-input').value)||0;
   const cd=document.getElementById('change-display');
   const cb=document.getElementById('confirm-pay-btn');
@@ -1734,7 +1734,7 @@ function calcChange(){
 }
 
 async function confirmPayment(){
-  const total=S.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const total=S.cart.reduce((s,i)=>s+(Number(i.price)||0)*i.qty,0);
   const cash=parseInt(document.getElementById('cash-input').value)||0;
   const change=cash-total;
   // 整理券番号取得
@@ -2685,8 +2685,9 @@ function confirmChoice(){
     if(!sel){showToast(`「${esc(comp.label||'オプション')}」を選択してください`,'error');return;}
     choices.push({id:sel.value,name:sel.dataset.name||'',label:sel.dataset.compLabel||comp.label||'',compLabel:comp.label||''});
   }
+  const choiceTarget=_choiceItem;
   closeChoiceModal();
-  addToCartWithChoices(_choiceItem,choices);
+  addToCartWithChoices(choiceTarget,choices);
 }
 
 // ============================================================
