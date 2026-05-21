@@ -1621,7 +1621,7 @@ function renderCart(){
     const d=document.createElement('div');
     d.className='cart-item';
     d.innerHTML=`<div class="ci-info"><div class="ci-name">${esc(item.name)}</div>${choiceTag?`<div style="margin-top:3px;">${choiceTag}</div>`:''}<div class="ci-price">¥${item.price.toLocaleString()} × ${item.qty} = ¥${(item.price*item.qty).toLocaleString()}</div></div>
-    <div class="qty-controls"><button class="qty-btn qty-minus" onclick="removeFromCart(${JSON.stringify(item.id)},${JSON.stringify(ck)})">−</button><span class="qty-num">${item.qty}</span><button class="qty-btn qty-plus" onclick="addCartQty(${JSON.stringify(item.id)},${JSON.stringify(ck)})">＋</button></div>`;
+    <div class="qty-controls"><button class="qty-btn qty-minus" onclick="removeFromCart(${JSON.stringify(item.id)},'${ck}')">−</button><span class="qty-num">${item.qty}</span><button class="qty-btn qty-plus" onclick="addCartQty(${JSON.stringify(item.id)},'${ck}')">＋</button></div>`;
     el.appendChild(d);
   });
 }
