@@ -127,15 +127,34 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 #cashier-screen{display:none;}
 #cashier-screen.show{display:block;}
 .cashier-body{padding:14px;max-width:1100px;margin:0 auto;}
-#cashier-pos{display:grid;grid-template-columns:1fr 310px;gap:14px;}
-@media(max-width:720px){#cashier-pos{grid-template-columns:1fr;}#cart-panel{order:-1;}}
+#cashier-pos{display:grid;grid-template-columns:1fr 310px;gap:14px;align-items:start;}
 
-.cat-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-.cat-btn{padding:9px 20px;border:2px solid var(--border);border-radius:24px;background:white;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;min-height:42px;white-space:nowrap;}
-.cat-btn.active{background:var(--primary);border-color:var(--primary);color:white;box-shadow:0 4px 12px rgba(37,99,235,.3);}
+/* ── PC: カテゴリ縦サイドバー ── */
+#cashier-menu-area{display:grid;grid-template-columns:112px 1fr;gap:14px;align-items:start;}
+.cat-filter{display:flex;flex-direction:column;gap:5px;position:sticky;top:67px;}
+.cat-btn{width:100%;text-align:left;padding:9px 12px;border:2px solid var(--border);border-radius:10px;background:white;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:normal;line-height:1.3;}
+.cat-btn.active{background:var(--primary);border-color:var(--primary);color:white;box-shadow:0 3px 10px rgba(37,99,235,.28);}
 .cat-btn:hover:not(.active){border-color:var(--primary);color:var(--primary);background:#f0f4ff;}
-.cat-filter{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:14px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.cat-filter::-webkit-scrollbar{display:none;}
+
+/* ── Mobile ── */
+@media(max-width:720px){
+  #cashier-pos{grid-template-columns:1fr;}
+  #cart-panel{display:none !important;}
+  #cashier-menu-area{display:block;}
+  .cat-filter{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;position:static;gap:8px;margin-bottom:12px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .cat-filter::-webkit-scrollbar{display:none;}
+  .cat-btn{width:auto;white-space:nowrap;border-radius:24px;padding:8px 16px;font-size:13px;}
+  .cashier-body{padding-bottom:74px;}
+}
+
+/* ── モバイル固定下バー ── */
+#mobile-cart-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:2px solid var(--border);padding:10px 14px 10px;gap:10px;align-items:center;box-shadow:0 -4px 20px rgba(0,0,0,.13);z-index:200;}
+@media(max-width:720px){#mobile-cart-bar{display:flex;}}
+.mcb-info{flex:1;}
+.mcb-count{font-size:12px;font-weight:700;color:var(--gray);}
+.mcb-total{font-size:20px;font-weight:900;color:var(--primary);letter-spacing:-.5px;}
+#mcb-pay-btn{background:var(--primary);color:white;border:none;border-radius:12px;padding:12px 22px;font-size:15px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(37,99,235,.3);}
+#mcb-pay-btn:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none;}
 
 #menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;}
 @media(max-width:480px){#menu-grid{grid-template-columns:repeat(2,1fr);}}
@@ -689,7 +708,7 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
   </div>
   <div class="cashier-body">
     <div id="cashier-pos">
-      <div>
+      <div id="cashier-menu-area">
         <div class="cat-filter" id="cat-filter"></div>
         <div id="menu-grid"></div>
       </div>
@@ -707,6 +726,14 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
         </div>
       </div>
     </div>
+  </div>
+  <!-- モバイル固定下バー -->
+  <div id="mobile-cart-bar">
+    <div class="mcb-info">
+      <div class="mcb-count" id="mcb-count">0点</div>
+      <div class="mcb-total" id="mcb-total">¥0</div>
+    </div>
+    <button id="mcb-pay-btn" onclick="showPaymentModal()" disabled>💳 お会計</button>
   </div>
   <!-- closed overlay for cashier -->
   <div class="closed-overlay" id="cashier-closed">
@@ -1577,6 +1604,13 @@ function renderCart(){
   document.getElementById('cart-count').textContent=`${count} 点`;
   document.getElementById('total-display').textContent=`¥${total.toLocaleString()}`;
   document.getElementById('pay-btn').disabled=S.cart.length===0;
+  // モバイル下バー更新
+  const mcbCount=document.getElementById('mcb-count');
+  const mcbTotal=document.getElementById('mcb-total');
+  const mcbPay=document.getElementById('mcb-pay-btn');
+  if(mcbCount) mcbCount.textContent=count>0?`${count}点`:'';
+  if(mcbTotal) mcbTotal.textContent=`¥${total.toLocaleString()}`;
+  if(mcbPay) mcbPay.disabled=S.cart.length===0;
   if(S.cart.length===0){el.innerHTML=`<div class="empty-state"><div class="icon">🛒</div><p>商品ボタンを<br>タップして追加</p></div>`;return;}
   el.innerHTML='';
   S.cart.forEach(item=>{
