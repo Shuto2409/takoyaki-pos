@@ -540,17 +540,23 @@ body{font-family:-apple-system,'Hiragino Kaku Gothic Pro','メイリオ',BlinkMa
 .gantt-axis-name{width:120px;flex-shrink:0;font-size:11px;color:#94a3b8;}
 .gantt-axis-cells{flex:1;display:flex;position:relative;}
 .gantt-axis-cell{flex:1;font-size:10px;color:#94a3b8;text-align:left;padding-left:2px;border-left:1px solid #e2e8f0;}
-.gantt-row{display:flex;align-items:center;margin-bottom:4px;min-height:32px;}
-.gantt-name-col{width:120px;flex-shrink:0;display:flex;align-items:center;gap:5px;padding-right:6px;}
-.gantt-name-col .gname{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.gantt-bar-area{flex:1;position:relative;height:28px;background:#f1f5f9;border-radius:4px;overflow:hidden;}
+.gantt-row{display:flex;align-items:center;margin-bottom:4px;min-height:40px;}
+.gantt-name-col{width:130px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;gap:2px;padding-right:6px;overflow:hidden;}
+.gantt-name-col .gnbadge{font-size:9px;font-weight:800;padding:1px 5px;border-radius:10px;align-self:flex-start;white-space:nowrap;}
+.gnbadge.existing{background:#d1fae5;color:#065f46;}
+.gnbadge.new{background:#dbeafe;color:#1e40af;}
+.gantt-name-col .gname{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
+.gantt-bar-area{flex:1;position:relative;height:36px;background:#f1f5f9;border-radius:4px;overflow:hidden;}
 .gantt-bar-area .grid-line{position:absolute;top:0;bottom:0;width:1px;background:#e2e8f0;}
-.gantt-bar{position:absolute;top:2px;bottom:2px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;padding:0 4px;cursor:default;}
+.gantt-bar{position:absolute;top:4px;bottom:4px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;padding:0 4px;cursor:default;}
 .gantt-bar.existing{background:#86efac;color:#166534;border:1px solid #4ade80;}
 .gantt-bar.newb{background:#93c5fd;color:#1e40af;border:1px solid #60a5fa;}
 .gantt-now-line{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;z-index:10;}
-.gantt-row-del{background:none;border:none;color:#cbd5e1;font-size:13px;cursor:pointer;padding:0 2px;margin-left:4px;flex-shrink:0;}
+.gantt-row-del{background:none;border:none;color:#cbd5e1;font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0;}
 .gantt-row-del:hover{color:#ef4444;}
+.gantt-row-edit{background:none;border:none;color:#cbd5e1;font-size:13px;cursor:pointer;padding:0 2px;flex-shrink:0;}
+.gantt-row-edit:hover{color:#2563eb;}
+.gantt-btn-group{display:flex;flex-direction:column;gap:1px;margin-left:3px;}
 .gantt-empty{text-align:center;color:#94a3b8;font-size:13px;padding:20px;}
 .gantt-legend{display:flex;gap:12px;font-size:11px;font-weight:700;margin-bottom:10px;}
 .gantt-legend span{display:flex;align-items:center;gap:4px;}
@@ -1074,7 +1080,7 @@ async function testConnection(config){
 const S={
   cart:[],isDayOpen:false,currentDay:null,
   menu:{},settings:{adminPin:'0000',storeName:'学園祭会計システム'},
-  ordersSnap:{},daysSnap:{},ticketsSnap:{},shiftsSnap:{},shiftViewDate:new Date().toISOString().slice(0,10),
+  ordersSnap:{},daysSnap:{},ticketsSnap:{},shiftsSnap:{},editingShiftId:null,shiftViewDate:new Date().toISOString().slice(0,10),
   pinBuf:'',pinCb:null,editingMenuId:null,selCat:'all',
   kitchenFilter:'pending',activeAdminTab:'settings',activePosTab:'menu',
   currentRole:null, // 'cashier'|'kitchen'|'admin'
@@ -3025,14 +3031,20 @@ function renderAdminShifts(){
       const widthPct=Math.max(1,((endMins-startMins)/GANTT_TOTAL_MINS)*100).toFixed(2);
       const cls=s.type==='既存生'?'existing':'newb';
       const badge=`<span class="sli-type ${s.type==='既存生'?'existing':'new'}" style="font-size:10px;padding:1px 5px;">${s.type}</span>`;
-      return `<div class="gantt-row">
-        <div class="gantt-name-col">${badge}<span class="gname">${s.name}</span></div>
+      return `<div class="gantt-row" id="grow-${id}">
+        <div class="gantt-name-col">
+          <span class="gnbadge ${cls==='existing'?'existing':'new'}">${s.type}</span>
+          <span class="gname" title="${s.name}">${s.name}</span>
+        </div>
         <div class="gantt-bar-area">
           ${gridLines.map(p=>`<div class="grid-line" style="left:${p}%"></div>`).join('')}
           ${nowPct!==null?`<div class="gantt-now-line" style="left:${nowPct}%"></div>`:''}
           <div class="gantt-bar ${cls}" style="left:${leftPct}%;width:${widthPct}%" title="${s.startTime}〜${s.endTime}">${s.startTime}〜${s.endTime}</div>
         </div>
-        <button class="gantt-row-del" onclick="deleteShift('${id}')" title="削除">✕</button>
+        <div class="gantt-btn-group">
+          <button class="gantt-row-edit" onclick="startEditShift('${id}')" title="編集">✏️</button>
+          <button class="gantt-row-del" onclick="deleteShift('${id}')" title="削除">✕</button>
+        </div>
       </div>`;
     }).join('');
 
@@ -3088,21 +3100,53 @@ function renderAdminShifts(){
   </div>`;
 }
 
-function addShift(){
+function submitShiftForm(){
   const name=(document.getElementById('sf-name').value||'').trim();
   if(!name){showToast('名前を入力してください','error');return;}
   const type=document.getElementById('sf-type').value;
   const date=document.getElementById('sf-date').value||new Date().toISOString().slice(0,10);
   const startTime=document.getElementById('sf-start').value||'09:00';
   const endTime=document.getElementById('sf-end').value||'15:00';
-  const id='s'+Date.now();
-  db.ref(`${ROOT}/shifts/${id}`).set({name,type,date,startTime,endTime})
-    .then(()=>{
-      showToast('追加しました','success');
-      document.getElementById('sf-name').value='';
-      S.shiftViewDate=date;
-      renderAdminShifts();
-    });
+  if(S.editingShiftId){
+    db.ref(`${ROOT}/shifts/${S.editingShiftId}`).update({name,type,date,startTime,endTime})
+      .then(()=>{showToast('更新しました','success');S.editingShiftId=null;S.shiftViewDate=date;renderAdminShifts();});
+  }else{
+    const id='s'+Date.now();
+    db.ref(`${ROOT}/shifts/${id}`).set({name,type,date,startTime,endTime})
+      .then(()=>{showToast('追加しました','success');document.getElementById('sf-name').value='';S.shiftViewDate=date;renderAdminShifts();});
+  }
+}
+function startEditShift(id){
+  const s=S.shiftsSnap[id];
+  if(!s) return;
+  S.editingShiftId=id;
+  // scroll to form
+  const card=document.getElementById('shift-form-card');
+  if(card) card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  // fill form
+  document.getElementById('sf-date').value=s.date||'';
+  document.getElementById('sf-name').value=s.name||'';
+  document.getElementById('sf-type').value=s.type||'既存生';
+  document.getElementById('sf-start').value=s.startTime||'09:00';
+  document.getElementById('sf-end').value=s.endTime||'15:00';
+  // update UI
+  document.getElementById('sf-form-title').textContent='✏️ シフト編集';
+  document.getElementById('sf-submit-btn').textContent='更新';
+  document.getElementById('sf-submit-btn').style.background='#0f766e';
+  document.getElementById('sf-cancel-btn').style.display='';
+  // highlight row
+  document.querySelectorAll('.gantt-row').forEach(r=>r.style.background='');
+  const row=document.getElementById('grow-'+id);
+  if(row) row.style.background='#eff6ff';
+}
+function cancelEditShift(){
+  S.editingShiftId=null;
+  document.getElementById('sf-form-title').textContent='＋ シフト追加';
+  document.getElementById('sf-submit-btn').textContent='＋ 追加';
+  document.getElementById('sf-submit-btn').style.background='';
+  document.getElementById('sf-cancel-btn').style.display='none';
+  document.getElementById('sf-name').value='';
+  document.querySelectorAll('.gantt-row').forEach(r=>r.style.background='');
 }
 
 function deleteShift(id){
