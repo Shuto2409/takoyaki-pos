@@ -3274,8 +3274,6 @@ function cancelEditShift(){
 function deleteShift(id){
   db.ref(`${ROOT}/shifts/${id}`).remove()
     .then(()=>showToast('削除しました','success'));
-}/shifts/${id}`).remove()
-    .then(()=>showToast('削除しました','success'));
 }
 // ============================================================
 //  BOOT
