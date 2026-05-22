@@ -1627,9 +1627,18 @@ function removeFromCart(id,choiceKey=''){
 function addCartQty(id,choiceKey=''){
   const sid=String(id);
   const ci=S.cart.find(c=>String(c.id)===sid&&(c._choiceKey||'')===(choiceKey||''));
+  if(!ci) return;
   const mi=S.menu[id]||S.menu[sid];
-  if(ci&&mi&&mi.stock>0&&ci.qty>=(mi.currentStock!=null?mi.currentStock:mi.stock)){showToast('在庫が足りません','error');return;}
-  if(ci)ci.qty++;
+  if(mi){
+    let avail=null;
+    if(mi.isSet){
+      avail=getSetAvailability(mi);
+    }else if(mi.stock>0){
+      avail=mi.currentStock!=null?mi.currentStock:mi.stock;
+    }
+    if(avail!==null&&ci.qty>=avail){showToast('在庫が足りません','error');return;}
+  }
+  ci.qty++;
   renderCart();
 }
 function clearCart(){if(!S.cart.length)return;S.cart=[];renderCart();}
