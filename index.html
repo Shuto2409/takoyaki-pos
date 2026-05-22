@@ -1080,7 +1080,7 @@ async function testConnection(config){
 const S={
   cart:[],isDayOpen:false,currentDay:null,
   menu:{},settings:{adminPin:'0000',storeName:'学園祭会計システム'},
-  ordersSnap:{},daysSnap:{},ticketsSnap:{},shiftsSnap:{},editingShiftId:null,shiftViewDate:new Date().toISOString().slice(0,10),
+  ordersSnap:{},daysSnap:{},ticketsSnap:{},shiftsSnap:{},editingShiftId:null,shiftViewDate:(()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`})(),
   pinBuf:'',pinCb:null,editingMenuId:null,selCat:'all',
   kitchenFilter:'pending',activeAdminTab:'settings',activePosTab:'menu',
   currentRole:null, // 'cashier'|'kitchen'|'admin'
@@ -2950,7 +2950,7 @@ function renderShiftDisplay(){
   const el=document.getElementById('role-shift-display');
   if(!el) return;
   const now=new Date();
-  const today=now.toISOString().slice(0,10);
+  const today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const hhmm=now.getHours()*60+now.getMinutes();
   const all=Object.values(S.shiftsSnap);
   const active=all.filter(s=>{
@@ -2979,18 +2979,25 @@ function renderShiftDisplay(){
 const GANTT_H_START=8, GANTT_H_END=22;
 const GANTT_TOTAL_MINS=(GANTT_H_END-GANTT_H_START)*60;
 
+function localDateStr(d){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 function shiftDateNav(delta){
   const d=new Date(S.shiftViewDate+'T00:00:00');
   d.setDate(d.getDate()+delta);
-  S.shiftViewDate=d.toISOString().slice(0,10);
+  S.shiftViewDate=localDateStr(d);
   renderAdminShifts();
 }
 
 function renderAdminShifts(){
   const el=document.getElementById('shifts-content');
   if(!el) return;
-  const viewDate=S.shiftViewDate||new Date().toISOString().slice(0,10);
-  const today=new Date().toISOString().slice(0,10);
+  const _tn=new Date();
+  const viewDate=S.shiftViewDate||`${_tn.getFullYear()}-${String(_tn.getMonth()+1).padStart(2,'0')}-${String(_tn.getDate()).padStart(2,'0')}`;
+  const today=`${_tn.getFullYear()}-${String(_tn.getMonth()+1).padStart(2,'0')}-${String(_tn.getDate()).padStart(2,'0')}`;
   const isToday=viewDate===today;
   // date label
   const d=new Date(viewDate+'T00:00:00');
@@ -3152,6 +3159,24 @@ function cancelEditShift(){
 function deleteShift(id){
   db.ref(`${ROOT}/shifts/${id}`).remove()
     .then(()=>showToast('削除しました','success'));
+}
+// ============================================================
+//  BOOT
+// ============================================================
+(function boot(){
+  if(window.PRESET_CONFIG&&window.PRESET_CONFIG.databaseURL){
+    if(initFirebase(window.PRESET_CONFIG)){startApp(window.PRESET_CONFIG);return;}
+  }
+  const saved=loadSavedConfig();
+  if(saved&&saved.databaseURL){
+    if(initFirebase(saved)){startApp(saved);return;}
+  }
+  showSetupScreen();
+})();
+</script>
+</body>
+</html>
+('削除しました','success'));
 }
 // ============================================================
 //  BOOT
