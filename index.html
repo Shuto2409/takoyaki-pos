@@ -3116,7 +3116,8 @@ function deleteShift(id){
   if(window.PRESET_CONFIG&&window.PRESET_CONFIG.databaseURL){
     if(initFirebase(window.PRESET_CONFIG)){startApp(window.PRESET_CONFIG);return;}
   }
-  const saved=loadSavedConfig(RL){
+  const saved=loadSavedConfig();
+  if(saved&&saved.databaseURL){
     if(initFirebase(saved)){startApp(saved);return;}
   }
   showSetupScreen();
