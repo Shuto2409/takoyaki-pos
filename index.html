@@ -2967,8 +2967,19 @@ function renderShiftDisplay(){
     if(!byGrade.has(g)) byGrade.set(g,[]);
     byGrade.get(g).push(s);
   });
+  // 学年を降順（4年→3年→2年→1年→スタッフ→その他）にソート
+  const gradeOrder=['4年','3年','2年','1年','スタッフ'];
+  const sortedGrades=[...byGrade.keys()].sort((a,b)=>{
+    const ai=gradeOrder.indexOf(a);
+    const bi=gradeOrder.indexOf(b);
+    if(ai>=0&&bi>=0) return ai-bi;
+    if(ai>=0) return -1;
+    if(bi>=0) return 1;
+    return a.localeCompare(b,'ja');
+  });
   let html='';
-  byGrade.forEach((members,grade)=>{
+  sortedGrades.forEach(grade=>{
+    const members=byGrade.get(grade);
     const col=getGradeColor(grade);
     html+=`<div class="shift-group"><div class="shift-group-label" style="color:#374151;">${grade}</div><div class="shift-names">${members.map(s=>`<span class="grade-tag" style="background:${col}20;color:#374151;border:1px solid ${col};">${s.name}</span>`).join('')}</div></div>`;
   });
